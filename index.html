@@ -1,0 +1,1010 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Painel de Gestão — Landbank Living</title>
+
+<!-- ═══════════════════════════════════════════
+     FIREBASE SDK (compat — funciona direto no HTML)
+═══════════════════════════════════════════ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--gold:#C1A785;--gold-dark:#A8894F;--gold-light:#D9BF8C;
+--bg:#F7F5F1;--surface:#FFFFFF;--border:#E8E0D0;
+--text:#2C2A26;--text-mid:#5C5649;--text-soft:#9C9080;
+--shadow:0 2px 12px rgba(193,167,133,.15);--radius:10px;
+--lbl-w:220px;--lbl-bg:#F0EBE0;--lbl-hover:#E8E0D0;--lbl-sel:#D8E6F5;
+--sim:#1A1A1A;--sim-light:#F2F2F2;--sim-border:#888888;
+}
+html{font-size:15px}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body.sim-active{background:#F5F5F5}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(44,42,38,.72);z-index:9999;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal-box{background:var(--surface);border-radius:var(--radius);padding:34px 38px;width:360px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.28);text-align:center;position:relative}
+.modal-box h3{font-size:1.15rem;color:var(--gold-dark);margin-bottom:5px}
+.modal-box p{color:var(--text-mid);font-size:.88rem;margin-bottom:22px}
+.modal-box input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:7px;font-size:.94rem;margin-bottom:13px;outline:none;transition:.2s}
+.modal-box input:focus{border-color:var(--gold)}
+.modal-btn{width:100%;padding:11px;background:var(--gold);color:#fff;border:none;border-radius:7px;font-size:1rem;font-weight:600;cursor:pointer;transition:.2s}
+.modal-btn:hover{background:var(--gold-dark)}
+.modal-err{color:#B04040;font-size:.82rem;margin-top:7px;display:none}
+.modal-close-btn{position:absolute;top:13px;right:15px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-soft)}
+.modal-logo{display:flex;justify-content:center;margin-bottom:18px}
+.confirm-box{background:var(--surface);border-radius:var(--radius);padding:32px 34px;width:430px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.32);text-align:center;position:relative}
+.confirm-box .confirm-icon{font-size:2.2rem;margin-bottom:10px}
+.confirm-box h3{font-size:1.05rem;margin-bottom:8px}
+.confirm-box h3.danger{color:#B04040}
+.confirm-box h3.warning{color:var(--gold-dark)}
+.confirm-box h3.sim{color:var(--sim)}
+.confirm-box p{color:var(--text-mid);font-size:.86rem;margin-bottom:24px;line-height:1.6}
+.confirm-box p strong{color:var(--text);font-weight:700}
+.confirm-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.confirm-btn-cancel{padding:10px 20px;border-radius:7px;font-size:.88rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--text-mid);transition:.2s}
+.confirm-btn-cancel:hover{border-color:var(--gold);color:var(--gold-dark)}
+.confirm-btn-delete{padding:10px 20px;border-radius:7px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;background:#B04040;color:#fff;transition:.2s}
+.confirm-btn-delete:hover{background:#8c3030}
+.confirm-btn-restore{padding:10px 20px;border-radius:7px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;background:var(--gold-dark);color:#fff;transition:.2s}
+.confirm-btn-restore:hover{background:#8c7040}
+.confirm-btn-sim{padding:10px 20px;border-radius:7px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;background:var(--sim);color:#fff;transition:.2s}
+.confirm-btn-sim:hover{background:#333}
+.modal-box.wide{width:700px;max-width:96vw;text-align:left;padding:30px 34px}
+.modal-box.wide h3{text-align:center;margin-bottom:18px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:.72rem;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.05em}
+.form-group input,.form-group select{padding:8px 11px;border:1.5px solid var(--border);border-radius:6px;font-size:.86rem;outline:none;transition:.2s;font-family:inherit;background:#fff;color:var(--text)}
+.form-group input:focus,.form-group select:focus{border-color:var(--gold)}
+.form-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+.btn-form{padding:9px 22px;border-radius:7px;font-size:.86rem;font-weight:600;cursor:pointer;border:none;transition:.2s}
+.btn-form.primary{background:var(--gold);color:#fff}
+.btn-form.primary:hover{background:var(--gold-dark)}
+.btn-form.secondary{background:transparent;border:1.5px solid var(--border);color:var(--text-mid)}
+.btn-form.secondary:hover{border-color:#B04040;color:#B04040}
+.date-modal-box{background:var(--surface);border-radius:var(--radius);padding:28px 32px;width:320px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.28);text-align:center;position:relative}
+.date-modal-box h3{font-size:1rem;color:var(--gold-dark);margin-bottom:6px}
+.date-modal-box p{font-size:.82rem;color:var(--text-soft);margin-bottom:16px}
+.date-modal-input{width:100%;padding:11px 13px;border:2px solid var(--gold-light);border-radius:8px;font-size:1rem;outline:none;font-family:inherit;color:var(--text);background:#fff;transition:.2s;margin-bottom:16px}
+.date-modal-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(193,167,133,.2)}
+.date-modal-actions{display:flex;gap:8px}
+.date-modal-ok{flex:2;padding:10px;background:var(--gold);color:#fff;border:none;border-radius:7px;font-size:.9rem;font-weight:700;cursor:pointer;transition:.2s}
+.date-modal-ok:hover{background:var(--gold-dark)}
+.date-modal-clear{flex:1;padding:10px;background:#fff;color:#B04040;border:1.5px solid #F5C6C2;border-radius:7px;font-size:.82rem;font-weight:600;cursor:pointer;transition:.2s}
+.date-modal-clear:hover{background:#FDECEA}
+td.td-date-edit{cursor:pointer!important;background:#FFFDF5!important;border-bottom:2px dashed var(--gold-light)!important;user-select:none}
+td.td-date-edit:hover{background:#FFF3E0!important}
+body.sim-active td.td-date-edit{background:#F0F0F0!important;border-bottom:2px dashed var(--sim-border)!important}
+body.sim-active td.td-date-edit:hover{background:#E8E8E8!important}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(193,167,133,.1)}
+body.sim-active header{border-bottom:3px solid var(--sim)}
+.logo-area{display:flex;align-items:center;gap:14px}
+.header-title{font-size:.78rem;color:var(--text-soft);font-weight:500;letter-spacing:.06em;text-transform:uppercase;border-left:1px solid var(--border);padding-left:14px}
+.header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:7px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:.2s;white-space:nowrap}
+.btn-outline{background:transparent;border:1.5px solid var(--gold);color:var(--gold-dark)}
+.btn-outline:hover{background:var(--gold);color:#fff}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-gold:hover{background:var(--gold-dark)}
+.btn-danger{background:#B04040;color:#fff}
+.btn-danger:hover{background:#8c3030}
+.btn-sim{background:var(--sim);color:#fff}
+.btn-sim:hover{background:#333}
+.btn-sim-outline{background:transparent;border:1.5px solid var(--sim);color:var(--sim)}
+.btn-sim-outline:hover{background:var(--sim);color:#fff}
+.btn-sim-apply{background:#2E7D52;color:#fff}
+.btn-sim-apply:hover{background:#1f5a3a}
+.btn-import{background:#2A5F8C;color:#fff}
+.btn-import:hover{background:#1e4a6e}
+.edit-badge{display:none;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;background:#FFF3E0;border:1.5px solid #C47A2A;color:#C47A2A;font-size:.78rem;font-weight:700}
+.edit-badge.active{display:inline-flex}
+.sim-badge{display:none;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;background:var(--sim-light);border:1.5px solid var(--sim-border);color:var(--sim);font-size:.78rem;font-weight:700}
+.sim-badge.active{display:inline-flex}
+.badge-dot{width:7px;height:7px;border-radius:50%;background:#C47A2A;animation:pulse 1.2s infinite}
+.badge-dot-sim{width:7px;height:7px;border-radius:50%;background:var(--sim);animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sim-banner{display:none;background:linear-gradient(90deg,#1A1A1A,#444);color:#fff;text-align:center;padding:7px 16px;font-size:.8rem;font-weight:700;letter-spacing:.05em;position:sticky;top:64px;z-index:99}
+.sim-banner.active{display:block}
+/* ── Indicador de sincronização ── */
+.sync-indicator{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--text-soft);padding:4px 10px;border-radius:12px;background:#F0EBE0;border:1px solid var(--border);white-space:nowrap}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#2E7D52;flex-shrink:0}
+.sync-dot.syncing{background:#C47A2A;animation:pulse 1s infinite}
+.sync-dot.error{background:#B04040}
+main{max-width:1640px;margin:0 auto;padding:24px 28px 60px}
+.section-title{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-dark);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:26px;background:var(--surface);padding:14px 18px;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow)}
+.filter-group{display:flex;flex-direction:column;gap:4px;position:relative}
+.filter-group label.fg-label{font-size:.72rem;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.05em}
+.ms-trigger{padding:7px 28px 7px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:.84rem;background:#fff;color:var(--text);cursor:pointer;min-width:145px;text-align:left;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-trigger::after{content:'▾';position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--text-soft);font-size:.75rem}
+.ms-trigger.has-sel{border-color:var(--gold);color:var(--gold-dark);font-weight:600}
+.ms-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1.5px solid var(--gold-light);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.15);z-index:500;min-width:190px;max-height:260px;overflow-y:auto;padding:6px 0}
+.ms-panel.open{display:block}
+.ms-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;font-size:.84rem;transition:.12s}
+.ms-item:hover{background:#FFF8EC}
+.ms-item input[type=checkbox]{accent-color:var(--gold);width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.ms-item span{cursor:pointer;flex:1}
+.ms-clear{display:block;width:calc(100% - 16px);margin:4px 8px 2px;padding:5px;background:transparent;border:1px solid var(--border);border-radius:5px;font-size:.77rem;cursor:pointer;color:var(--text-mid);transition:.15s}
+.ms-clear:hover{border-color:#B04040;color:#B04040}
+.filter-reset{align-self:flex-end;padding:7px 13px;background:transparent;border:1.5px solid var(--border);border-radius:6px;font-size:.84rem;cursor:pointer;color:var(--text-mid);transition:.2s}
+.filter-reset:hover{border-color:#B04040;color:#B04040}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:13px;margin-bottom:8px}
+.kpi-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow);transition:.2s}
+.kpi-card:hover{box-shadow:0 4px 20px rgba(193,167,133,.25);transform:translateY(-1px)}
+.kpi-label{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-soft);margin-bottom:7px}
+.kpi-value{font-size:1.35rem;font-weight:700;color:var(--gold-dark);line-height:1;margin-bottom:3px}
+.kpi-sub{font-size:.76rem;color:var(--text-soft)}
+.kpi-card.accent{background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none}
+.kpi-card.accent .kpi-label{color:rgba(255,255,255,.75)}
+.kpi-card.accent .kpi-value{color:#fff}
+.kpi-card.accent .kpi-sub{color:rgba(255,255,255,.65)}
+body.sim-active .kpi-card.accent{background:linear-gradient(135deg,#1A1A1A,#555)}
+.kpi-note{font-size:.74rem;color:var(--text-soft);margin-bottom:26px;margin-top:9px;padding:7px 13px;background:#FFF8EC;border-left:3px solid var(--gold-light);border-radius:0 6px 6px 0;display:flex;align-items:center;gap:7px}
+.kpi-note strong{color:var(--gold-dark)}
+.gantt-sel-note{display:none;font-size:.74rem;padding:6px 12px;background:#E8F0FA;border-left:3px solid #3A7AB0;border-radius:0 6px 6px 0;color:#2A5F8C;margin-bottom:10px;align-items:center;gap:8px}
+.gantt-sel-note.visible{display:flex}
+.gantt-wrapper{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:30px}
+.gantt-header-bar{background:linear-gradient(90deg,var(--gold-dark),var(--gold));padding:13px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+body.sim-active .gantt-header-bar{background:linear-gradient(90deg,#1A1A1A,#555)}
+.gantt-header-bar>span{color:#fff;font-weight:700;font-size:.86rem;letter-spacing:.04em}
+.gantt-controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.gantt-zoom-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:.8rem}
+.gantt-zoom-btn:hover{background:rgba(255,255,255,.35)}
+.gantt-sel-btn{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.5);color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:.78rem}
+.gantt-sel-btn.active{background:rgba(255,255,255,.35);font-weight:700}
+.gantt-container{overflow-x:auto;overflow-y:auto;max-height:500px}
+.gantt-inner-wrap{display:block;position:relative}
+.gantt-head-row{display:flex;position:sticky;top:0;z-index:12;background:var(--lbl-bg);border-bottom:2px solid var(--gold-light)}
+.gantt-lbl-hdr{width:var(--lbl-w);min-width:var(--lbl-w);flex-shrink:0;padding:9px 13px;font-size:.72rem;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.05em;border-right:1px solid var(--border);position:sticky;left:0;z-index:13;background:var(--lbl-bg)}
+.gantt-months-hdr{display:flex;flex:1 0 0}
+.gantt-month-cell{flex:0 0 auto;text-align:center;font-size:.7rem;font-weight:700;color:var(--text-soft);text-transform:uppercase;padding:9px 0;border-right:1px solid var(--border)}
+.gantt-month-cell.today-col{background:#FFF8EC;color:var(--gold-dark)}
+.gantt-data-row{display:flex;align-items:stretch;border-bottom:1px solid var(--border);transition:.15s}
+.gantt-data-row:hover{background:#FDFAF5}
+.gantt-data-row.g-selected{background:#EDF4FF!important;outline:2px solid #3A7AB0;outline-offset:-1px}
+.gantt-row-lbl{width:var(--lbl-w);min-width:var(--lbl-w);flex-shrink:0;padding:7px 13px;font-size:.8rem;color:var(--text);font-weight:500;border-right:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:sticky;left:0;z-index:6;background:var(--lbl-bg);display:flex;flex-direction:column;justify-content:center;cursor:pointer}
+.gantt-data-row:hover .gantt-row-lbl{background:var(--lbl-hover)}
+.gantt-data-row.g-selected .gantt-row-lbl{background:var(--lbl-sel)}
+.gantt-row-lbl small{font-size:.7rem;color:var(--text-soft)}
+.gantt-bar-area{flex:1 0 0;position:relative;height:40px}
+.gantt-bar{position:absolute;top:50%;transform:translateY(-50%);height:19px;border-radius:9px;cursor:pointer;transition:.2s}
+.gantt-bar:hover{height:23px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.gantt-grid-ln{position:absolute;top:0;bottom:0;width:1px;background:var(--border);pointer-events:none}
+.gantt-today-line{position:absolute;top:0;bottom:0;width:2px;background:#B04040;opacity:.8;pointer-events:none;z-index:4}
+.gantt-today-tag{position:absolute;top:2px;font-size:.58rem;font-weight:700;color:#B04040;white-space:nowrap;pointer-events:none;z-index:4;letter-spacing:.03em}
+.bar-lancado{background:linear-gradient(90deg,#2E7D52,#4A8C5C)}
+.bar-previsto{background:linear-gradient(90deg,#2A5F8C,#3A7AB0)}
+.bar-coringa{background:linear-gradient(90deg,#7A5C8C,#9B7AB0)}
+.bar-contratacao{background:linear-gradient(90deg,#7A6040,#B08A5A)}
+.tooltip{position:fixed;background:rgba(44,42,38,.95);color:#fff;padding:10px 14px;border-radius:8px;font-size:.76rem;pointer-events:none;z-index:9000;max-width:290px;box-shadow:0 4px 16px rgba(0,0,0,.3);display:none;line-height:1.75}
+.tooltip strong{color:var(--gold-light);display:block;margin-bottom:5px;font-size:.82rem}
+.table-wrapper{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.table-header-bar{background:linear-gradient(90deg,var(--gold-dark),var(--gold));padding:13px 18px;display:flex;justify-content:space-between;align-items:center}
+body.sim-active .table-header-bar{background:linear-gradient(90deg,#1A1A1A,#555)}
+.table-header-bar span{color:#fff;font-weight:700;font-size:.86rem;letter-spacing:.04em}
+.table-actions{display:flex;gap:7px;align-items:center}
+.tbl-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:5px 11px;border-radius:5px;cursor:pointer;font-size:.79rem;font-weight:600;transition:.2s}
+.tbl-btn:hover{background:rgba(255,255,255,.35)}
+.table-scroll{overflow-x:auto;overflow-y:auto;max-height:1080px}
+table{width:100%;border-collapse:collapse;font-size:.82rem;table-layout:fixed}
+thead{position:sticky;top:0;z-index:5}
+thead th{background:#F0EBE0;padding:8px 7px;text-align:left;font-size:.71rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--gold-light);white-space:normal;word-break:break-word;line-height:1.3;vertical-align:bottom;cursor:pointer;user-select:none}
+thead th:hover{background:#E8DFD0;color:var(--gold-dark)}
+body.sim-active thead th{background:#E8E8E8;border-bottom:2px solid var(--sim-border)}
+.sort-icon{margin-left:3px;opacity:.4}
+tbody tr{border-bottom:1px solid var(--border);transition:.12s}
+tbody tr:hover{background:#FDFAF5}
+tbody td{padding:8px 7px;color:var(--text);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+tbody td[contenteditable="true"]{outline:none;border-bottom:2px solid var(--gold-light);background:#FFFCF5;cursor:text}
+tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:var(--gold)}
+.status-pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap}
+.pill-lancado{background:#E8F5EE;color:#2E7D52}
+.pill-previsto{background:#E8F0FA;color:#2A5F8C}
+.pill-coringa{background:#F0E8FA;color:#6A3C8C}
+.pill-contratacao{background:#FFF3E0;color:#8C5A20}
+.row-edited{background:#FFFBF0!important}
+.row-sim-edited{background:#EBEBEB!important}
+.farol{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:600}
+.fdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.f-verde{color:#2E7D52}.f-verde .fdot{background:#2E7D52;box-shadow:0 0 5px rgba(46,125,82,.5)}
+.f-amarelo{color:#C47A2A}.f-amarelo .fdot{background:#C47A2A;box-shadow:0 0 5px rgba(196,122,42,.5)}
+.f-vermelho{color:#B04040}.f-vermelho .fdot{background:#B04040;box-shadow:0 0 5px rgba(176,64,64,.5)}
+.seg-select{border:none;background:transparent;font-size:.82rem;color:var(--text);cursor:pointer;padding:0;font-family:inherit;outline:none;width:100%}
+.btn-expand-status{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--gold-light);color:#fff;border:none;cursor:pointer;font-size:.85rem;font-weight:700;line-height:1;transition:.2s;flex-shrink:0}
+.btn-expand-status:hover{background:var(--gold-dark)}
+.btn-expand-status.open{background:var(--gold-dark);transform:rotate(45deg)}
+.btn-edit-row{display:none;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#E8F0FA;color:#2A5F8C;border:1.5px solid #B8D0E8;cursor:pointer;font-size:.78rem;font-weight:700;line-height:1;transition:.2s;flex-shrink:0}
+.btn-edit-row:hover{background:#2A5F8C;color:#fff;border-color:#2A5F8C}
+.edit-mode .btn-edit-row{display:inline-flex}
+.btn-del-row{display:none;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#FDECEA;color:#B04040;border:1.5px solid #F5C6C2;cursor:pointer;font-size:.82rem;font-weight:700;line-height:1;transition:.2s;flex-shrink:0}
+.btn-del-row:hover{background:#B04040;color:#fff;border-color:#B04040}
+.edit-mode .btn-del-row{display:inline-flex}
+.status-panel-row{display:none}
+.status-panel-row.open{display:table-row}
+.status-panel-cell{padding:0!important;background:#FAFAF8;border-bottom:2px solid var(--gold-light)!important}
+.status-panel-inner{padding:12px 16px 16px;border-top:1px solid var(--gold-light)}
+.sp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.sp-title{font-size:.78rem;font-weight:700;color:var(--gold-dark);text-transform:uppercase;letter-spacing:.07em}
+.sp-actions{display:flex;gap:7px;flex-wrap:wrap}
+.sp-btn{padding:4px 11px;border-radius:5px;font-size:.73rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--text-mid);transition:.15s;white-space:nowrap}
+.sp-btn:hover{border-color:var(--gold);color:var(--gold-dark)}
+.sp-btn.danger:hover{border-color:#B04040;color:#B04040}
+.sp-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.sp-table thead th{background:#EDE7DA;padding:6px 9px;text-align:left;font-size:.68rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.05em;border-bottom:1.5px solid var(--gold-light)}
+.sp-table tbody tr{border-bottom:1px solid var(--border);transition:.12s}
+.sp-table tbody tr:hover{background:#FFF8EC}
+.sp-table tbody tr.sp-hidden{display:none}
+.sp-table td{padding:7px 9px;vertical-align:top}
+.sp-col-assunto{width:160px;font-weight:600;color:var(--text-mid);white-space:nowrap}
+.sp-col-farol{width:70px;text-align:center}
+.sp-status-cell{outline:none;min-height:28px;white-space:pre-wrap;word-break:break-word;line-height:1.5;border-radius:4px;padding:2px 4px;transition:.15s}
+.sp-status-cell[contenteditable="true"]:focus{background:#FFF8EC;box-shadow:0 0 0 2px var(--gold-light)}
+.sp-status-cell[contenteditable="false"]{cursor:default}
+.farol-cycle-btn{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid rgba(0,0,0,.18);flex-shrink:0;vertical-align:middle}
+.farol-cycle-btn.editable{cursor:pointer}
+.farol-cycle-btn.editable:hover{transform:scale(1.2)}
+.farol-cycle-btn.locked{cursor:not-allowed;opacity:.7}
+.farol-cycle-btn[data-farol="neutro"]{background:#C8C0B4}
+.farol-cycle-btn[data-farol="verde"]{background:#2E7D52;box-shadow:0 0 5px rgba(46,125,82,.5)}
+.farol-cycle-btn[data-farol="amarelo"]{background:#C47A2A;box-shadow:0 0 5px rgba(196,122,42,.5)}
+.farol-cycle-btn[data-farol="vermelho"]{background:#B04040;box-shadow:0 0 5px rgba(176,64,64,.5)}
+.sp-hide-btn{background:none;border:none;cursor:pointer;color:var(--text-soft);font-size:.72rem;padding:2px 5px;border-radius:3px;transition:.15s;white-space:nowrap}
+.sp-hide-btn:hover{background:#F0EBE0;color:#B04040}
+.edit-toolbar{display:none;padding:11px 18px;background:#FFF8EC;border-top:1px solid var(--gold-light);align-items:center;gap:10px;flex-wrap:wrap}
+.edit-toolbar.visible{display:flex}
+.edit-toolbar-note{font-size:.76rem;color:var(--text-mid);flex:1}
+.edit-toolbar-note strong{color:var(--gold-dark)}
+.sim-toolbar{display:none;padding:13px 18px;background:var(--sim-light);border-top:2px solid var(--sim-border);align-items:center;gap:10px;flex-wrap:wrap}
+.sim-toolbar.visible{display:flex}
+.sim-toolbar-note{font-size:.76rem;color:var(--sim);flex:1;font-weight:600}
+.history-panel{display:none;position:fixed;right:0;top:0;bottom:0;width:400px;background:var(--surface);border-left:1px solid var(--border);box-shadow:-4px 0 20px rgba(0,0,0,.15);z-index:200;flex-direction:column}
+.history-panel.open{display:flex}
+.history-head{background:linear-gradient(135deg,var(--gold-dark),var(--gold));padding:17px 19px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.history-head span{color:#fff;font-weight:700;font-size:.9rem}
+.history-close{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer}
+.history-list{flex:1;overflow-y:auto;padding:14px}
+.history-item{padding:13px 15px;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;background:#fff;transition:.15s}
+.history-item.current{border-color:var(--gold);background:#FFF8EC}
+.history-item-title{font-size:.84rem;font-weight:700;color:var(--text);margin-bottom:3px}
+.history-item-meta{font-size:.74rem;color:var(--text-soft);margin-bottom:2px}
+.history-item-badges{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}
+.history-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.66rem;font-weight:700;color:#fff}
+.history-badge.manual{background:var(--gold-dark)}
+.history-badge.auto{background:var(--text-soft)}
+.history-badge.current{background:#2E7D52}
+.history-restore-btn{margin-left:auto;padding:4px 12px;border-radius:6px;font-size:.74rem;font-weight:700;cursor:pointer;border:1.5px solid var(--gold);background:#fff;color:var(--gold-dark);transition:.15s;white-space:nowrap}
+.history-restore-btn:hover{background:var(--gold);color:#fff}
+.history-footer{padding:13px 15px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:8px;flex-shrink:0}
+.history-footer .btn{justify-content:center;font-size:.78rem;padding:7px 10px}
+.history-footer .btn-import-full{grid-column:1/-1}
+#importFileInput{display:none}
+.save-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#2E7D52;color:#fff;padding:11px 22px;border-radius:8px;font-size:.86rem;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
+.save-toast.show{opacity:1}
+.save-toast.sim-toast{background:#1A1A1A}
+</style>
+</head>
+<body>
+<div class="tooltip" id="tooltip"></div>
+<input type="file" id="importFileInput" accept=".json" onchange="handleImportFile(event)"/>
+
+<div class="sim-banner" id="simBanner">🔬 MODO SIMULAÇÃO ATIVO — As alterações não serão salvas automaticamente</div>
+
+<div class="modal-overlay" id="dateModal">
+<div class="date-modal-box">
+<h3 id="dateModalTitle">📅 Editar Data</h3>
+<p id="dateModalSub">Selecione a nova data:</p>
+<input type="date" class="date-modal-input" id="dateModalInput"/>
+<div class="date-modal-actions">
+<button class="date-modal-ok" id="dateModalOk">✓ Confirmar</button>
+<button class="date-modal-clear" id="dateModalClear">✕ Limpar</button>
+</div>
+<button class="modal-close-btn" id="dateModalClose" style="top:10px;right:12px">×</button>
+</div>
+</div>
+
+<div class="modal-overlay" id="confirmDeleteModal">
+<div class="confirm-box">
+<div class="confirm-icon">🗑️</div>
+<h3 class="danger">Excluir projeto?</h3>
+<p>Você está prestes a excluir<br><strong id="confirmDeleteNome"></strong><br><br>Essa ação será registrada no histórico e pode ser desfeita pela restauração de versão.</p>
+<div class="confirm-actions">
+<button class="confirm-btn-cancel" onclick="closeModal('confirmDeleteModal')">Cancelar</button>
+<button class="confirm-btn-delete" id="confirmDeleteBtn">Sim, excluir</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="confirmRestoreModal">
+<div class="confirm-box">
+<div class="confirm-icon">↩️</div>
+<h3 class="warning">Restaurar esta versão?</h3>
+<p>Você está prestes a restaurar:<br><strong id="confirmRestoreNome"></strong><br><br>Os dados atuais serão substituídos pelos dados desta versão.</p>
+<div class="confirm-actions">
+<button class="confirm-btn-cancel" onclick="closeModal('confirmRestoreModal')">Cancelar</button>
+<button class="confirm-btn-restore" id="confirmRestoreBtn">↩ Sim, restaurar</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="simExitModal">
+<div class="confirm-box">
+<div class="confirm-icon">🔬</div>
+<h3 class="sim">Sair da Simulação</h3>
+<p>O que deseja fazer com as alterações desta simulação?</p>
+<div class="confirm-actions">
+<button class="confirm-btn-sim" id="simApplyBtn">✅ Substituir versão atual</button>
+<button class="confirm-btn-delete" id="simDiscardBtn">🗑 Descartar e sair</button>
+<button class="confirm-btn-cancel" onclick="closeModal('simExitModal')">Voltar à simulação</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="authModal">
+<div class="modal-box">
+<button class="modal-close-btn" onclick="closeModal('authModal')">×</button>
+<div class="modal-logo"><svg style="height:36px;width:auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060.546 365.977"><defs><style>.cls-1{fill:#c1a785;}</style></defs><g><g><g><path class="cls-1" d="M295.421,114.597v110.803c0,6.045,4.9,10.945,10.945,10.945h78.322v15.035h-63.84c-23.359,0-42.295-18.936-42.295-42.295v-94.487h16.868Z"/><path class="cls-1" d="M435.931,114.597h16.868v136.782h-16.868V114.597Z"/><path class="cls-1" d="M563.333,251.379h0c-5.358,0-10.162-3.299-12.086-8.3l-53.567-128.483h17.969l48.142,115.147,47.776-115.147h17.419l-53.567,128.483c-1.924,5-6.728,8.3-12.086,8.3Z"/><path class="cls-1" d="M673.866,114.597h16.868v136.782h-16.868V114.597Z"/><path class="cls-1" d="M761.652,136.075v115.305h-16.868v-124.703c0-6.671,5.408-12.08,12.08-12.08h0c3.612,0,7.035,1.617,9.33,4.407l87.441,106.327v-110.734h16.868v125.634c0,6.157-4.991,11.148-11.148,11.148h0c-3.384,0-6.586-1.537-8.701-4.179l-89.001-111.126Z"/><path class="cls-1" d="M941.87,131.622c-13.963,13.606-21.652,31.784-21.652,51.183s7.689,37.757,21.652,51.435c14.015,13.729,32.804,21.289,52.906,21.289,39.538,0,65.77-32.442,65.77-53.9v-2.79c0-12.464-10.104-22.567-22.567-22.567h-41.603v14.083l50.534-.184.005.246c.24,12.684-4.665,24.803-13.812,34.125-10.03,10.223-24,16.086-38.326,16.086-15.396,0-29.964-6.155-41.02-17.332-10.954-11.074-16.987-25.52-16.987-40.674,0-31.045,26.563-57.273,58.007-57.273,14.722,0,28.04,5.149,39.591,15.307l11.021-11.378c-13.213-11.969-31.645-18.83-50.612-18.83-20.104,0-38.894,7.52-52.906,21.175Z"/></g><path class="cls-1" d="M8.349,96.363c-5.346,5.346-8.349,12.597-8.349,20.157v104.095c0,26.24,21.272,47.511,47.511,47.511h57.349l-.149-268.126L8.349,96.363ZM104.861,268.126l.044,78.818c.009,16.874,20.367,25.368,32.366,13.504l93.377-92.322h-125.787Z"/></g></g></svg></div>
+<h3>Modo Edição</h3><p>Acesso restrito ao time Living.<br/>Insira a senha para continuar.</p>
+<input type="password" id="authPassword" placeholder="Senha de edição" onkeydown="if(event.key==='Enter')checkAuth()"/>
+<button class="modal-btn" onclick="checkAuth()">Entrar no modo edição</button>
+<div class="modal-err" id="authErr">Senha incorreta. Tente novamente.</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="simAuthModal">
+<div class="modal-box">
+<button class="modal-close-btn" onclick="closeModal('simAuthModal')">×</button>
+<div class="modal-logo"><svg style="height:36px;width:auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060.546 365.977"><defs><style>.cls-1{fill:#c1a785;}</style></defs><g><g><g><path class="cls-1" d="M295.421,114.597v110.803c0,6.045,4.9,10.945,10.945,10.945h78.322v15.035h-63.84c-23.359,0-42.295-18.936-42.295-42.295v-94.487h16.868Z"/><path class="cls-1" d="M435.931,114.597h16.868v136.782h-16.868V114.597Z"/><path class="cls-1" d="M563.333,251.379h0c-5.358,0-10.162-3.299-12.086-8.3l-53.567-128.483h17.969l48.142,115.147,47.776-115.147h17.419l-53.567,128.483c-1.924,5-6.728,8.3-12.086,8.3Z"/><path class="cls-1" d="M673.866,114.597h16.868v136.782h-16.868V114.597Z"/><path class="cls-1" d="M761.652,136.075v115.305h-16.868v-124.703c0-6.671,5.408-12.08,12.08-12.08h0c3.612,0,7.035,1.617,9.33,4.407l87.441,106.327v-110.734h16.868v125.634c0,6.157-4.991,11.148-11.148,11.148h0c-3.384,0-6.586-1.537-8.701-4.179l-89.001-111.126Z"/><path class="cls-1" d="M941.87,131.622c-13.963,13.606-21.652,31.784-21.652,51.183s7.689,37.757,21.652,51.435c14.015,13.729,32.804,21.289,52.906,21.289,39.538,0,65.77-32.442,65.77-53.9v-2.79c0-12.464-10.104-22.567-22.567-22.567h-41.603v14.083l50.534-.184.005.246c.24,12.684-4.665,24.803-13.812,34.125-10.03,10.223-24,16.086-38.326,16.086-15.396,0-29.964-6.155-41.02-17.332-10.954-11.074-16.987-25.52-16.987-40.674,0-31.045,26.563-57.273,58.007-57.273,14.722,0,28.04,5.149,39.591,15.307l11.021-11.378c-13.213-11.969-31.645-18.83-50.612-18.83-20.104,0-38.894,7.52-52.906,21.175Z"/></g><path class="cls-1" d="M8.349,96.363c-5.346,5.346-8.349,12.597-8.349,20.157v104.095c0,26.24,21.272,47.511,47.511,47.511h57.349l-.149-268.126L8.349,96.363ZM104.861,268.126l.044,78.818c.009,16.874,20.367,25.368,32.366,13.504l93.377-92.322h-125.787Z"/></g></g></svg></div>
+<h3 style="color:#1A1A1A">🔬 Modo Simulação</h3>
+<p>Simule alterações de datas sem afetar os dados reais.<br/>As mudanças só são salvas se você escolher substituir.</p>
+<input type="password" id="simPassword" placeholder="Senha de simulação" onkeydown="if(event.key==='Enter')checkSimAuth()"/>
+<button class="modal-btn" style="background:#1A1A1A" onclick="checkSimAuth()">Entrar no modo simulação</button>
+<div class="modal-err" id="simErr">Senha incorreta. Tente novamente.</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="newProjectModal">
+<div class="modal-box wide">
+<button class="modal-close-btn" onclick="closeModal('newProjectModal')">×</button>
+<h3>➕ Novo Projeto</h3>
+<div class="form-grid">
+<div class="form-group full"><label>Nome do Terreno *</label><input type="text" id="np_nome" placeholder="Ex: Rua das Flores"/></div>
+<div class="form-group"><label>Segmento *</label><select id="np_segmento"><option value="">Selecione…</option><option>Padrão</option><option>Full</option><option>Compactos</option><option>ABC</option><option>Coringa</option></select></div>
+<div class="form-group"><label>Status *</label><select id="np_status"><option value="">Selecione…</option><option>Lançado</option><option>Previsto</option><option>Coringa</option><option>Em contratação</option></select></div>
+<div class="form-group"><label>Coordenação</label><select id="np_coordenacao"><option value="">Selecione…</option><option>Artur Dorfman</option><option>Denis Pimentel</option></select></div>
+<div class="form-group"><label>Doninho</label><select id="np_doninho"><option value="">Selecione…</option><option>Akemi Yoshizane</option><option>Wericles Albano</option><option>Denis Pimentel</option><option>Giulia Oliveira</option><option>Aline Furlaneto</option></select></div>
+<div class="form-group"><label>Região</label><input type="text" id="np_regiao" placeholder="Ex: Mooca"/></div>
+<div class="form-group full"><label>Mix de Produtos</label><input type="text" id="np_mix" placeholder="Ex: 65, 75 e 89m²"/></div>
+<div class="form-group"><label>Reunião de Passagem</label><input type="date" id="np_reuniaoPassagem"/></div>
+<div class="form-group"><label>Meeting</label><input type="date" id="np_meeting"/></div>
+<div class="form-group"><label>Lançamento</label><input type="date" id="np_lancamento"/></div>
+<div class="form-group"><label>Início de Obra</label><input type="date" id="np_inicioObra"/></div>
+<div class="form-group"><label>Nº de Unidades</label><input type="number" id="np_unidades" placeholder="0" min="0"/></div>
+<div class="form-group"><label>% CBR</label><select id="np_pctCbr"><option value="100">100%</option><option value="75">75%</option><option value="55">55%</option><option value="50">50%</option></select></div>
+<div class="form-group"><label>VGV Nom 100% (R$ Mi)</label><input type="number" id="np_vgvNom" placeholder="0" min="0" step="0.1"/></div>
+<div class="form-group"><label>VGV Nom %CBR (R$ Mi)</label><input type="number" id="np_vgvNomCbr" placeholder="0" min="0" step="0.1"/></div>
+<div class="form-group"><label>VGV VP %CBR (R$ Mi)</label><input type="number" id="np_vgvVpCbr" placeholder="0" min="0" step="0.1"/></div>
+</div>
+<div class="modal-err" id="npErr" style="display:none;text-align:left;margin-top:8px"></div>
+<div class="form-actions">
+<button class="btn-form secondary" onclick="closeModal('newProjectModal')">Cancelar</button>
+<button class="btn-form primary" onclick="submitNewProject()">✅ Adicionar Projeto</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="editProjectModal">
+<div class="modal-box wide">
+<button class="modal-close-btn" onclick="closeModal('editProjectModal')">×</button>
+<h3>✏️ Editar Projeto</h3>
+<div class="form-grid">
+<div class="form-group full"><label>Nome do Terreno *</label><input type="text" id="ep_nome" placeholder="Ex: Rua das Flores"/></div>
+<div class="form-group"><label>Segmento *</label><select id="ep_segmento"><option value="">Selecione…</option><option>Padrão</option><option>Full</option><option>Compactos</option><option>ABC</option><option>Coringa</option></select></div>
+<div class="form-group"><label>Status *</label><select id="ep_status"><option value="">Selecione…</option><option>Lançado</option><option>Previsto</option><option>Coringa</option><option>Em contratação</option></select></div>
+<div class="form-group"><label>Coordenação</label><select id="ep_coordenacao"><option value="">Selecione…</option><option>Artur Dorfman</option><option>Denis Pimentel</option></select></div>
+<div class="form-group"><label>Doninho</label><select id="ep_doninho"><option value="">Selecione…</option><option>Akemi Yoshizane</option><option>Wericles Albano</option><option>Denis Pimentel</option><option>Giulia Oliveira</option><option>Aline Furlaneto</option></select></div>
+<div class="form-group"><label>Região</label><input type="text" id="ep_regiao" placeholder="Ex: Mooca"/></div>
+<div class="form-group full"><label>Mix de Produtos</label><input type="text" id="ep_mix" placeholder="Ex: 65, 75 e 89m²"/></div>
+<div class="form-group"><label>Reunião de Passagem</label><input type="date" id="ep_reuniaoPassagem"/></div>
+<div class="form-group"><label>Meeting</label><input type="date" id="ep_meeting"/></div>
+<div class="form-group"><label>Lançamento</label><input type="date" id="ep_lancamento"/></div>
+<div class="form-group"><label>Início de Obra</label><input type="date" id="ep_inicioObra"/></div>
+<div class="form-group"><label>Nº de Unidades</label><input type="number" id="ep_unidades" placeholder="0" min="0"/></div>
+<div class="form-group"><label>% CBR</label><select id="ep_pctCbr"><option value="100">100%</option><option value="75">75%</option><option value="55">55%</option><option value="50">50%</option></select></div>
+<div class="form-group"><label>VGV Nom 100% (R$ Mi)</label><input type="number" id="ep_vgvNom" placeholder="0" min="0" step="0.1"/></div>
+<div class="form-group"><label>VGV Nom %CBR (R$ Mi)</label><input type="number" id="ep_vgvNomCbr" placeholder="0" min="0" step="0.1"/></div>
+<div class="form-group"><label>VGV VP %CBR (R$ Mi)</label><input type="number" id="ep_vgvVpCbr" placeholder="0" min="0" step="0.1"/></div>
+</div>
+<div class="modal-err" id="epErr" style="display:none;text-align:left;margin-top:8px"></div>
+<div class="form-actions">
+<button class="btn-form secondary" onclick="closeModal('editProjectModal')">Cancelar</button>
+<button class="btn-form primary" onclick="submitEditProject()">💾 Salvar Alterações</button>
+</div>
+</div>
+</div>
+
+<div class="history-panel" id="historyPanel">
+<div class="history-head"><span>📋 Histórico de Versões</span><button class="history-close" onclick="toggleHistory()">×</button></div>
+<div class="history-list" id="historyList"></div>
+<div class="history-footer">
+<button class="btn btn-outline" onclick="exportJSON()">⬇ Exportar JSON</button>
+<button class="btn btn-gold" onclick="exportFullBackup()">⬇ Backup Completo</button>
+<button class="btn btn-import btn-import-full" onclick="triggerImport()">⬆ Importar Backup (.json)</button>
+</div>
+</div>
+
+<header>
+<div class="logo-area">
+<svg style="height:30px;width:auto;display:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060.546 365.977"><defs><style>.cls-1{fill:#c1a785;}</style></defs><g><g><g><path class="cls-1" d="M295.421,114.597v110.803c0,6.045,4.9,10.945,10.945,10.945h78.322v15.035h-63.84c-23.359,0-42.295-18.936-42.295-42.295v-94.487h16.868Z"/><path class="cls-1" d="M435.931,114.597h16.868v136.782h-16.868V114.597Z"/><path class="cls-1" d="M563.333,251.379h0c-5.358,0-10.162-3.299-12.086-8.3l-53.567-128.483h17.969l48.142,115.147,47.776-115.147h17.419l-53.567,128.483c-1.924,5-6.728,8.3-12.086,8.3Z"/><path class="cls-1" d="M673.866,114.597h16.868v136.782h-16.868V114.597Z"/><path class="cls-1" d="M761.652,136.075v115.305h-16.868v-124.703c0-6.671,5.408-12.08,12.08-12.08h0c3.612,0,7.035,1.617,9.33,4.407l87.441,106.327v-110.734h16.868v125.634c0,6.157-4.991,11.148-11.148,11.148h0c-3.384,0-6.586-1.537-8.701-4.179l-89.001-111.126Z"/><path class="cls-1" d="M941.87,131.622c-13.963,13.606-21.652,31.784-21.652,51.183s7.689,37.757,21.652,51.435c14.015,13.729,32.804,21.289,52.906,21.289,39.538,0,65.77-32.442,65.77-53.9v-2.79c0-12.464-10.104-22.567-22.567-22.567h-41.603v14.083l50.534-.184.005.246c.24,12.684-4.665,24.803-13.812,34.125-10.03,10.223-24,16.086-38.326,16.086-15.396,0-29.964-6.155-41.02-17.332-10.954-11.074-16.987-25.52-16.987-40.674,0-31.045,26.563-57.273,58.007-57.273,14.722,0,28.04,5.149,39.591,15.307l11.021-11.378c-13.213-11.969-31.645-18.83-50.612-18.83-20.104,0-38.894,7.52-52.906,21.175Z"/></g><path class="cls-1" d="M8.349,96.363c-5.346,5.346-8.349,12.597-8.349,20.157v104.095c0,26.24,21.272,47.511,47.511,47.511h57.349l-.149-268.126L8.349,96.363ZM104.861,268.126l.044,78.818c.009,16.874,20.367,25.368,32.366,13.504l93.377-92.322h-125.787Z"/></g></g></svg>
+<span class="header-title">Painel de Gestão — Landbank</span>
+</div>
+<div class="header-actions">
+<div class="sync-indicator" id="syncIndicator">
+<span class="sync-dot" id="syncDot"></span>
+<span id="syncText">Conectando…</span>
+</div>
+<span class="edit-badge" id="editBadge"><span class="badge-dot"></span> MODO EDIÇÃO ATIVO</span>
+<span class="sim-badge" id="simBadge"><span class="badge-dot-sim"></span> 🔬 SIMULAÇÃO ATIVA</span>
+<button class="btn btn-outline" id="versionsBtn" style="display:none" onclick="toggleHistory()">📋 Versões</button>
+<button class="btn btn-outline" id="editBtn" onclick="requestEdit()">✏️ Editar</button>
+<button class="btn btn-sim-outline" id="simBtn" onclick="requestSim()">🔬 Simular</button>
+<button class="btn btn-danger" id="exitEditBtn" style="display:none" onclick="exitEdit()">✕ Sair</button>
+<button class="btn btn-gold" id="saveBtn" style="display:none" onclick="saveVersion()">💾 Salvar versão</button>
+<button class="btn btn-sim-apply" id="simApplyHeaderBtn" style="display:none" onclick="applySimDirect()">✅ Substituir versão</button>
+<button class="btn btn-sim" id="exitSimBtn" style="display:none" onclick="requestExitSim()">🔬 Sair da Simulação</button>
+</div>
+</header>
+
+<main>
+<div class="section-title">Filtros</div>
+<div class="filters">
+<div class="filter-group"><label class="fg-label">Ano Lançamento</label><button class="ms-trigger" id="trg-ano" onclick="togglePanel(event,'ano')">Todos</button><div class="ms-panel" id="pnl-ano"><button class="ms-clear" onclick="clearFilter('ano')">✕ Limpar</button><div class="ms-item"><input type="checkbox" value="2023" onchange="filterChange('ano')"><span>2023</span></div><div class="ms-item"><input type="checkbox" value="2024" onchange="filterChange('ano')"><span>2024</span></div><div class="ms-item"><input type="checkbox" value="2025" onchange="filterChange('ano')"><span>2025</span></div><div class="ms-item"><input type="checkbox" value="2026" onchange="filterChange('ano')"><span>2026</span></div><div class="ms-item"><input type="checkbox" value="2027" onchange="filterChange('ano')"><span>2027</span></div><div class="ms-item"><input type="checkbox" value="2028" onchange="filterChange('ano')"><span>2028</span></div></div></div>
+<div class="filter-group"><label class="fg-label">Status</label><button class="ms-trigger" id="trg-status" onclick="togglePanel(event,'status')">Todos</button><div class="ms-panel" id="pnl-status"><button class="ms-clear" onclick="clearFilter('status')">✕ Limpar</button><div class="ms-item"><input type="checkbox" value="Lançado" onchange="filterChange('status')"><span>Lançado</span></div><div class="ms-item"><input type="checkbox" value="Previsto" onchange="filterChange('status')"><span>Previsto</span></div><div class="ms-item"><input type="checkbox" value="Coringa" onchange="filterChange('status')"><span>Coringa</span></div><div class="ms-item"><input type="checkbox" value="Em contratação" onchange="filterChange('status')"><span>Em contratação</span></div></div></div>
+<div class="filter-group"><label class="fg-label">Coordenação</label><button class="ms-trigger" id="trg-coord" onclick="togglePanel(event,'coord')">Todas</button><div class="ms-panel" id="pnl-coord"><button class="ms-clear" onclick="clearFilter('coord')">✕ Limpar</button><div class="ms-item"><input type="checkbox" value="Artur Dorfman" onchange="filterChange('coord')"><span>Artur Dorfman</span></div><div class="ms-item"><input type="checkbox" value="Denis Pimentel" onchange="filterChange('coord')"><span>Denis Pimentel</span></div></div></div>
+<div class="filter-group"><label class="fg-label">Doninho</label><button class="ms-trigger" id="trg-doninho" onclick="togglePanel(event,'doninho')">Todos</button><div class="ms-panel" id="pnl-doninho"><button class="ms-clear" onclick="clearFilter('doninho')">✕ Limpar</button><div class="ms-item"><input type="checkbox" value="Akemi Yoshizane" onchange="filterChange('doninho')"><span>Akemi Yoshizane</span></div><div class="ms-item"><input type="checkbox" value="Wericles Albano" onchange="filterChange('doninho')"><span>Wericles Albano</span></div><div class="ms-item"><input type="checkbox" value="Denis Pimentel" onchange="filterChange('doninho')"><span>Denis Pimentel</span></div><div class="ms-item"><input type="checkbox" value="Giulia Oliveira" onchange="filterChange('doninho')"><span>Giulia Oliveira</span></div><div class="ms-item"><input type="checkbox" value="Aline Furlaneto" onchange="filterChange('doninho')"><span>Aline Furlaneto</span></div></div></div>
+<div class="filter-group"><label class="fg-label">Segmento</label><button class="ms-trigger" id="trg-seg" onclick="togglePanel(event,'seg')">Todos</button><div class="ms-panel" id="pnl-seg"><button class="ms-clear" onclick="clearFilter('seg')">✕ Limpar</button><div class="ms-item"><input type="checkbox" value="Padrão" onchange="filterChange('seg')"><span>Padrão</span></div><div class="ms-item"><input type="checkbox" value="Full" onchange="filterChange('seg')"><span>Full</span></div><div class="ms-item"><input type="checkbox" value="Compactos" onchange="filterChange('seg')"><span>Compactos</span></div><div class="ms-item"><input type="checkbox" value="ABC" onchange="filterChange('seg')"><span>ABC</span></div><div class="ms-item"><input type="checkbox" value="Coringa" onchange="filterChange('seg')"><span>Coringa</span></div><div class="ms-item"><input type="checkbox" value="Em contratação" onchange="filterChange('seg')"><span>Em contratação</span></div></div></div>
+<div class="filter-group"><label class="fg-label">Buscar</label><input type="text" id="fSearch" placeholder="Nome do terreno…" oninput="applyFilters()" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:.84rem;min-width:145px;outline:none;background:#fff"/></div>
+<button class="filter-reset" onclick="resetFilters()">↺ Limpar tudo</button>
+</div>
+<div class="section-title">Indicadores</div>
+<div class="gantt-sel-note" id="ganttSelNote">🎯 <span id="ganttSelText"></span><button onclick="clearGanttSel()" style="margin-left:auto;background:none;border:1px solid #3A7AB0;color:#2A5F8C;border-radius:5px;padding:2px 8px;cursor:pointer;font-size:.74rem">✕ Limpar seleção</button></div>
+<div class="kpi-grid">
+<div class="kpi-card accent"><div class="kpi-label">Lançamentos Previstos</div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-sub">projetos no landbank</div></div>
+<div class="kpi-card"><div class="kpi-label">VGV Nominal 100%</div><div class="kpi-value" id="kpiVgvNom">—</div><div class="kpi-sub">R$ milhões</div></div>
+<div class="kpi-card"><div class="kpi-label">VGV Nom %CBR</div><div class="kpi-value" id="kpiVgvCbr">—</div><div class="kpi-sub">R$ milhões</div></div>
+<div class="kpi-card"><div class="kpi-label">VGV VP %CBR</div><div class="kpi-value" id="kpiVgvVp">—</div><div class="kpi-sub">R$ milhões</div></div>
+<div class="kpi-card"><div class="kpi-label">Nº de Unidades</div><div class="kpi-value" id="kpiUnidades">—</div><div class="kpi-sub">unidades totais</div></div>
+<div class="kpi-card"><div class="kpi-label">Tempo Médio p/ Lançamento</div><div class="kpi-value" id="kpiTempo">—</div><div class="kpi-sub">meses (passagem → lançamento)</div></div>
+</div>
+<div class="kpi-note">⚠️ <strong>Atenção:</strong> indicadores consideram apenas <strong>Lançado</strong> e <strong>Previsto</strong>. Coringa e Em contratação são excluídos.</div>
+<div class="section-title">Linha do Tempo — Meeting → Lançamento</div>
+<div class="gantt-wrapper" id="ganttWrapper">
+<div class="gantt-header-bar">
+<span id="ganttTitle">📅 Gantt de Lançamentos</span>
+<div class="gantt-controls">
+<button class="gantt-zoom-btn" onclick="ganttZoom(-1)">− Zoom</button>
+<button class="gantt-zoom-btn" onclick="ganttZoom(1)">+ Zoom</button>
+<button class="gantt-zoom-btn" onclick="ganttScrollToday()">Ir para hoje</button>
+<button class="gantt-sel-btn" id="ganttSelModeBtn" onclick="toggleGanttSelMode()">☐ Selecionar projetos</button>
+</div>
+</div>
+<div class="gantt-container" id="ganttContainer"></div>
+</div>
+<div class="section-title">Tabela de Projetos</div>
+<div class="table-wrapper">
+<div class="table-header-bar">
+<span>📊 Landbank Detalhado — <span id="tableCount">0</span> projetos</span>
+<div class="table-actions">
+<button class="tbl-btn" onclick="exportCSV()">⬇ CSV</button>
+<button class="tbl-btn" onclick="exportJSON()">⬇ JSON</button>
+<button class="tbl-btn" id="btnAddProject" style="display:none;background:rgba(255,255,255,.35);font-weight:700" onclick="openNewProjectModal()">➕ Novo Projeto</button>
+</div>
+</div>
+<div class="table-scroll">
+<table id="mainTable">
+<thead><tr>
+<th style="width:32px"></th><th style="width:32px"></th><th style="width:32px"></th>
+<th style="width:138px" onclick="sortTable('nome')">Terreno <span class="sort-icon">↕</span></th>
+<th style="width:90px" onclick="sortTable('segmento')">Segmento <span class="sort-icon">↕</span></th>
+<th style="width:108px" onclick="sortTable('coordenacao')">Coordenação <span class="sort-icon">↕</span></th>
+<th style="width:108px" onclick="sortTable('doninho')">Doninho <span class="sort-icon">↕</span></th>
+<th style="width:82px" onclick="sortTable('status')">Status <span class="sort-icon">↕</span></th>
+<th style="width:130px">Mix</th>
+<th style="width:90px" onclick="sortTable('reuniaoPassagem')">Reun. Passagem <span class="sort-icon">↕</span></th>
+<th style="width:90px" onclick="sortTable('meeting')">Meeting <span class="sort-icon">↑</span></th>
+<th style="width:90px" onclick="sortTable('lancamento')">Lançamento <span class="sort-icon">↕</span></th>
+<th style="width:56px" onclick="sortTable('unidades')">Unid. <span class="sort-icon">↕</span></th>
+<th style="width:64px" onclick="sortTable('vgvNom')">VGV Nom 100% <span class="sort-icon">↕</span></th>
+<th style="width:64px" onclick="sortTable('vgvNomCbr')">VGV Nom %CBR <span class="sort-icon">↕</span></th>
+<th style="width:64px" onclick="sortTable('vgvVpCbr')">VGV VP %CBR <span class="sort-icon">↕</span></th>
+<th style="width:50px" onclick="sortTable('pctCbr')">% CBR <span class="sort-icon">↕</span></th>
+<th style="width:72px" onclick="sortTable('mesesLanc')">Meses p/ Lanç. <span class="sort-icon">↕</span></th>
+<th style="width:90px" onclick="sortTable('inicioObra')">Início Obra <span class="sort-icon">↕</span></th>
+</tr></thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+<div class="edit-toolbar" id="editToolbar">
+<span class="edit-toolbar-note">✏️ <strong>Modo edição ativo</strong> — clique nas células para editar. Datas 📅 abrem calendário. Botão ✏️ abre edição completa.</span>
+<button class="btn btn-gold" onclick="openNewProjectModal()">➕ Novo Projeto</button>
+<button class="btn btn-gold" onclick="saveVersion()">💾 Salvar versão</button>
+</div>
+<div class="sim-toolbar" id="simToolbar">
+<span class="sim-toolbar-note">🔬 Modo Simulação — datas com 📅 são editáveis. Alterações não afetam os dados reais até você escolher substituir.</span>
+<button class="btn btn-sim" onclick="requestExitSim()">🔬 Sair da Simulação</button>
+</div>
+</div>
+</main>
+<div class="save-toast" id="saveToast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  FIREBASE — inicialização
+// ═══════════════════════════════════════════════════
+var firebaseConfig = {
+  apiKey: "AIzaSyAOQ4jWpC4kE8efXU5D1KdvXg_De0U8WQ4",
+  authDomain: "living-landbank.firebaseapp.com",
+  projectId: "living-landbank",
+  storageBucket: "living-landbank.firebasestorage.app",
+  messagingSenderId: "572852178816",
+  appId: "1:572852178816:web:04a3a90b2435b94450fb65"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+
+// Indicador de sincronização
+function setSyncState(state, msg) {
+  var dot = document.getElementById('syncDot');
+  var txt = document.getElementById('syncText');
+  dot.className = 'sync-dot' + (state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
+  txt.textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════
+//  VARIÁVEIS GLOBAIS
+// ═══════════════════════════════════════════════════
+var EDIT_PASSWORD="living2025";
+var SIM_PASSWORD="simula2025";
+var KPI_STATUSES=["Lançado","Previsto"];
+var LBL_W=220;
+var TABLE_COLSPAN=19;
+var SEG_OPTS=["Padrão","Full","Compactos","ABC","Coringa"];
+var STATUS_TOPICS=["Estudos Iniciais","Due Diligence","Retificação","Posses","Ambiental Verde","Ambiental Azul","Aprovação","Projeto","Demolição","PDV","Marketing","Imagens","Maquete","Graprohab","Incorporação","Meeting","Lançamento","Vendas","Observações"];
+var FAROL_CYCLE=['neutro','verde','amarelo','vermelho'];
+var statusData={};
+var DATE_LABELS={reuniaoPassagem:'Reunião de Passagem',meeting:'Meeting',lancamento:'Lançamento',inicioObra:'Início de Obra'};
+var appData=[],simData=null,filteredData=[];
+var editMode=false,simMode=false;
+var sortKey=null,sortDir=1;
+var versions=[],editedRows=new Set(),simEditedRows=new Set();
+var ganttSelMode=false,ganttSelected=new Set();
+var ganttColW=60;
+var _dm={idx:null,field:null,tdEl:null};
+var _pendingDeleteNome=null,_pendingRestoreId=null,_editIdx=null;
+var _fbListenerMain=null,_fbListenerStatus=null;
+var _ignoreSnapshot=false; // evita loop ao salvar
+
+// ═══════════════════════════════════════════════════
+//  FIREBASE — PERSISTÊNCIA (substitui localStorage)
+// ═══════════════════════════════════════════════════
+function persistMain() {
+  setSyncState('syncing','Salvando…');
+  _ignoreSnapshot = true;
+  db.collection('landbank').doc('main').set({
+    appData: appData,
+    versions: versions,
+    updatedAt: new Date().toISOString()
+  }).then(function() {
+    setSyncState('ok','Sincronizado ✓');
+    setTimeout(function(){ _ignoreSnapshot = false; }, 800);
+  }).catch(function(e) {
+    setSyncState('error','Erro ao salvar');
+    _ignoreSnapshot = false;
+    console.error('Firestore write error:', e);
+  });
+}
+
+function persistStatus() {
+  db.collection('landbank').doc('status').set(statusData).catch(function(e){
+    console.error('Status write error:', e);
+  });
+}
+
+// Listener tempo real — main
+function startMainListener() {
+  if (_fbListenerMain) _fbListenerMain();
+  _fbListenerMain = db.collection('landbank').doc('main').onSnapshot(function(doc) {
+    if (_ignoreSnapshot) return;
+    if (doc.exists) {
+      var d = doc.data();
+      if (d.appData && Array.isArray(d.appData) && d.appData.length > 0) {
+        appData = d.appData;
+        versions = d.versions || [];
+        sortByMeeting(appData);
+        if (!simMode) { applyFilters(); renderHistoryList(); }
+        setSyncState('ok','Sincronizado ✓');
+      }
+    }
+  }, function(err) {
+    setSyncState('error','Sem conexão');
+    console.error('Snapshot error:', err);
+  });
+}
+
+// Listener tempo real — status
+function startStatusListener() {
+  if (_fbListenerStatus) _fbListenerStatus();
+  _fbListenerStatus = db.collection('landbank').doc('status').onSnapshot(function(doc) {
+    if (_ignoreSnapshot) return;
+    if (doc.exists) {
+      var d = doc.data();
+      if (d && typeof d === 'object') {
+        statusData = d;
+        if (!simMode) refreshOpenPanels();
+      }
+    }
+  }, function(err) {
+    console.error('Status snapshot error:', err);
+  });
+}
+
+// Carga inicial — carrega do Firebase e só usa RAW_DATA se vazio
+function loadFromFirebase(callback) {
+  setSyncState('syncing','Carregando…');
+  Promise.all([
+    db.collection('landbank').doc('main').get(),
+    db.collection('landbank').doc('status').get()
+  ]).then(function(results) {
+    var mainDoc = results[0];
+    var statusDoc = results[1];
+
+    if (mainDoc.exists) {
+      var d = mainDoc.data();
+      if (d.appData && Array.isArray(d.appData) && d.appData.length > 0) {
+        appData = d.appData;
+        versions = d.versions || [];
+      } else {
+        // banco vazio — sobe RAW_DATA
+        appData = JSON.parse(JSON.stringify(RAW_DATA));
+        persistMain();
+      }
+    } else {
+      // documento não existe — sobe RAW_DATA
+      appData = JSON.parse(JSON.stringify(RAW_DATA));
+      persistMain();
+    }
+
+    if (statusDoc.exists) {
+      var s = statusDoc.data();
+      if (s && typeof s === 'object') statusData = s;
+    }
+
+    setSyncState('ok','Sincronizado ✓');
+    callback();
+  }).catch(function(err) {
+    setSyncState('error','Erro de conexão — usando dados locais');
+    console.error('Firebase load error:', err);
+    // fallback: usa RAW_DATA localmente
+    appData = JSON.parse(JSON.stringify(RAW_DATA));
+    callback();
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  FUNÇÕES UTILITÁRIAS (idênticas à v44)
+// ═══════════════════════════════════════════════════
+function activeData(){return simMode?simData:appData;}
+function sortByMeeting(arr){arr.sort(function(a,b){var da=a.meeting?a.meeting:'9999-99';var db=b.meeting?b.meeting:'9999-99';return da<db?-1:da>db?1:0;});return arr;}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+function showToast(msg,isSim){var t=document.getElementById('saveToast');t.textContent=msg;t.className='save-toast'+(isSim?' sim-toast':'')+' show';setTimeout(function(){t.classList.remove('show');},3200);}
+function safeId(n){return n.replace(/[^a-zA-Z0-9]/g,'_');}
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escQ(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function fmtDate(d){if(!d)return'—';var dt=new Date(d+'T00:00:00');if(isNaN(dt.getTime()))return d;return String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+dt.getFullYear();}
+function fmtVGV(n){return n!=null?Number(n).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}):'—';}
+function fmtCurVGV(n){return n!=null?'R$\u00A0'+fmtVGV(n)+'M':'—';}
+function fmtNum(n){return n!=null?Number(n).toLocaleString('pt-BR',{maximumFractionDigits:0}):'—';}
+function diffMonths(a,b){if(!a||!b)return null;var da=new Date(a+'T00:00:00'),db=new Date(b+'T00:00:00');if(isNaN(da)||isNaN(db))return null;return Math.round((db-da)/(1000*60*60*24*30.44));}
+function barClass(s){var m={'Lançado':'bar-lancado','Previsto':'bar-previsto','Coringa':'bar-coringa','Em contratação':'bar-contratacao'};return m[s]||'bar-previsto';}
+function pillClass(s){var m={'Lançado':'pill-lancado','Previsto':'pill-previsto','Coringa':'pill-coringa','Em contratação':'pill-contratacao'};return m[s]||'pill-previsto';}
+function farolHTML(m){if(m==null)return'<span style="color:var(--text-soft);font-size:.77rem">—</span>';var cls=m<=15?'f-verde':m<=18?'f-amarelo':'f-vermelho';return'<span class="farol '+cls+'"><span class="fdot"></span>'+m+'m</span>';}
+function hasStatusPanel(r){if(!r.lancamento)return false;if(r.status==='Em contratação')return false;return parseInt(r.lancamento.slice(0,4),10)>=2025;}
+function segmentoCell(r,gi){var opts=SEG_OPTS.map(function(o){return'<option'+(r.segmento===o?' selected':'')+'>'+o+'</option>';}).join('');var dis=(editMode||simMode)?'':' disabled';return'<select class="seg-select"'+dis+' onchange="onSelChange('+gi+',\'segmento\',this.value)">'+opts+'</select>';}
+
+// ═══════════════════════════════════════════════════
+//  MODAL DE DATA
+// ═══════════════════════════════════════════════════
+(function setupDateModal(){
+document.getElementById('dateModalOk').onclick=function(){applyDateModal(document.getElementById('dateModalInput').value);};
+document.getElementById('dateModalClear').onclick=function(){applyDateModal('');};
+document.getElementById('dateModalClose').onclick=function(){closeModal('dateModal');};
+document.getElementById('dateModalInput').onkeydown=function(e){if(e.key==='Enter')applyDateModal(document.getElementById('dateModalInput').value);if(e.key==='Escape')closeModal('dateModal');};
+})();
+
+function openDateModal(idx,field,tdEl){if(!editMode&&!simMode)return;_dm.idx=idx;_dm.field=field;_dm.tdEl=tdEl;document.getElementById('dateModalTitle').textContent='📅 '+(DATE_LABELS[field]||field)+(simMode?' 🔬':'');document.getElementById('dateModalSub').textContent='Projeto: '+activeData()[idx].nome;document.getElementById('dateModalInput').value=activeData()[idx][field]||'';document.getElementById('dateModal').classList.add('active');setTimeout(function(){document.getElementById('dateModalInput').focus();},150);}
+
+function applyDateModal(val){
+  var idx=_dm.idx,field=_dm.field,tdEl=_dm.tdEl;
+  closeModal('dateModal');
+  if(idx===null||!field)return;
+  activeData()[idx][field]=val;
+  if(simMode)simEditedRows.add(idx);else editedRows.add(idx);
+  if(tdEl)tdEl.textContent=val?fmtDate(val):'—';
+  var tr=document.querySelector('tr[data-idx="'+idx+'"]');
+  if(tr){tr.classList.remove('row-edited','row-sim-edited');tr.classList.add(simMode?'row-sim-edited':'row-edited');}
+  if(field==='reuniaoPassagem'||field==='lancamento'){
+    if(tr){var mTd=tr.querySelector('.td-meses');if(mTd)mTd.innerHTML=farolHTML(diffMonths(activeData()[idx].reuniaoPassagem,activeData()[idx].lancamento));}
+    updateKPIs();
+  }
+  if(field==='meeting'){sortByMeeting(activeData());applyFilters();return;}
+  if(field==='lancamento')renderGantt();
+  if(!simMode)persistMain();
+}
+
+// ═══════════════════════════════════════════════════
+//  DELETE / RESTORE
+// ═══════════════════════════════════════════════════
+document.getElementById('confirmDeleteBtn').onclick=function(){if(!_pendingDeleteNome)return;var n=_pendingDeleteNome;_pendingDeleteNome=null;closeModal('confirmDeleteModal');executeDelete(n);};
+function requestDelete(n){if(!editMode&&!simMode)return;_pendingDeleteNome=n;document.getElementById('confirmDeleteNome').textContent='"'+n+'"';document.getElementById('confirmDeleteModal').classList.add('active');}
+function executeDelete(n){var arr=activeData();var i=arr.findIndex(function(r){return r.nome===n;});if(i===-1)return;arr.splice(i,1);if(!simMode&&statusData[n])delete statusData[n];if(!simMode){persistStatus();autoSaveVersion('🗑 Projeto excluído: '+n);}applyFilters();showToast('🗑 "'+n+'" removido.',simMode);}
+
+document.getElementById('confirmRestoreBtn').onclick=function(){if(!_pendingRestoreId)return;var id=_pendingRestoreId;_pendingRestoreId=null;closeModal('confirmRestoreModal');executeRestore(id);};
+function requestRestore(id){var v=null;for(var i=0;i<versions.length;i++){if(versions[i].id===id){v=versions[i];break;}}if(!v||!v.data||!v.data.length){showToast('⚠️ Versão sem dados.');return;}_pendingRestoreId=id;document.getElementById('confirmRestoreNome').textContent='"'+v.label+'"';document.getElementById('confirmRestoreModal').classList.add('active');}
+function executeRestore(id){var v=null;for(var i=0;i<versions.length;i++){if(versions[i].id===id){v=versions[i];break;}}if(!v||!v.data||!v.data.length){showToast('⚠️ Versão sem dados.');return;}appData=JSON.parse(JSON.stringify(v.data));if(v.statusData&&typeof v.statusData==='object'){statusData=JSON.parse(JSON.stringify(v.statusData));persistStatus();}editedRows.clear();sortByMeeting(appData);persistMain();applyFilters();document.getElementById('historyPanel').classList.remove('open');showToast('↩ "'+v.label+'" restaurada!');}
+
+// ═══════════════════════════════════════════════════
+//  EDITAR PROJETO (MODAL)
+// ═══════════════════════════════════════════════════
+function openEditProjectModal(idx){if(!editMode&&!simMode)return;_editIdx=idx;var r=activeData()[idx];document.getElementById('ep_nome').value=r.nome||'';document.getElementById('ep_segmento').value=r.segmento||'';document.getElementById('ep_status').value=r.status||'';document.getElementById('ep_coordenacao').value=r.coordenacao||'';document.getElementById('ep_doninho').value=r.doninho||'';document.getElementById('ep_regiao').value=r.regiao||'';document.getElementById('ep_mix').value=r.mix||'';document.getElementById('ep_reuniaoPassagem').value=r.reuniaoPassagem||'';document.getElementById('ep_meeting').value=r.meeting||'';document.getElementById('ep_lancamento').value=r.lancamento||'';document.getElementById('ep_inicioObra').value=r.inicioObra||'';document.getElementById('ep_unidades').value=r.unidades!=null?r.unidades:'';document.getElementById('ep_pctCbr').value=r.pctCbr!=null?String(r.pctCbr):'100';document.getElementById('ep_vgvNom').value=r.vgvNom!=null?r.vgvNom:'';document.getElementById('ep_vgvNomCbr').value=r.vgvNomCbr!=null?r.vgvNomCbr:'';document.getElementById('ep_vgvVpCbr').value=r.vgvVpCbr!=null?r.vgvVpCbr:'';document.getElementById('epErr').style.display='none';document.getElementById('editProjectModal').classList.add('active');setTimeout(function(){document.getElementById('ep_nome').focus();},120);}
+function submitEditProject(){var idx=_editIdx;if(idx===null||idx===undefined)return;var nome=document.getElementById('ep_nome').value.trim(),segmento=document.getElementById('ep_segmento').value,status=document.getElementById('ep_status').value,errEl=document.getElementById('epErr');if(!nome){errEl.textContent='⚠️ Nome do terreno é obrigatório.';errEl.style.display='block';document.getElementById('ep_nome').focus();return;}if(!segmento){errEl.textContent='⚠️ Selecione um segmento.';errEl.style.display='block';return;}if(!status){errEl.textContent='⚠️ Selecione um status.';errEl.style.display='block';return;}var arr=activeData();var dup=arr.some(function(r,i){return i!==idx&&r.nome.toLowerCase()===nome.toLowerCase();});if(dup){errEl.textContent='⚠️ Já existe outro projeto com esse nome.';errEl.style.display='block';return;}arr[idx].nome=nome;arr[idx].segmento=segmento;arr[idx].status=status;arr[idx].coordenacao=document.getElementById('ep_coordenacao').value;arr[idx].doninho=document.getElementById('ep_doninho').value;arr[idx].regiao=document.getElementById('ep_regiao').value.trim();arr[idx].mix=document.getElementById('ep_mix').value.trim();arr[idx].reuniaoPassagem=document.getElementById('ep_reuniaoPassagem').value||'';arr[idx].meeting=document.getElementById('ep_meeting').value||'';arr[idx].lancamento=document.getElementById('ep_lancamento').value||'';arr[idx].inicioObra=document.getElementById('ep_inicioObra').value||'';arr[idx].unidades=parseFloat(document.getElementById('ep_unidades').value)||0;arr[idx].pctCbr=parseFloat(document.getElementById('ep_pctCbr').value)||100;arr[idx].vgvNom=parseFloat(document.getElementById('ep_vgvNom').value)||0;arr[idx].vgvNomCbr=parseFloat(document.getElementById('ep_vgvNomCbr').value)||0;arr[idx].vgvVpCbr=parseFloat(document.getElementById('ep_vgvVpCbr').value)||0;if(simMode)simEditedRows.add(idx);else editedRows.add(idx);closeModal('editProjectModal');sortByMeeting(arr);applyFilters();if(!simMode)autoSaveVersion('✏️ Projeto editado: '+nome);showToast('✅ "'+nome+'" atualizado!',simMode);}
+
+// ═══════════════════════════════════════════════════
+//  STATUS PANEL
+// ═══════════════════════════════════════════════════
+function initStatusData(nome){if(!statusData[nome]){statusData[nome]={open:false,rows:STATUS_TOPICS.map(function(t){return{topic:t,farol:'neutro',texto:'',hidden:false};})};}}
+function buildStatusPanel(nome,colSpan){initStatusData(nome);var sd=statusData[nome],sid=safeId(nome);var hc=sd.rows.filter(function(r){return r.hidden;}).length;var html='<tr class="status-panel-row'+(sd.open?' open':'')+'" id="spr_'+sid+'"><td class="status-panel-cell" colspan="'+colSpan+'"><div class="status-panel-inner">';html+='<div class="sp-header"><span class="sp-title">📋 Status — '+nome+'</span><div class="sp-actions">';if(hc>0)html+='<button class="sp-btn" onclick="showAllRows(\''+sid+'\')">👁 Reexibir todas ('+hc+' ocultas)</button>';html+='<button class="sp-btn danger" onclick="toggleStatusPanel(\''+sid+'\',\''+escQ(nome)+'\')">✕ Fechar</button></div></div>';if(!editMode&&!simMode){html+='<div style="font-size:.72rem;color:var(--text-soft);background:#F7F5F1;border:1px solid var(--border);border-radius:5px;padding:5px 10px;margin-bottom:8px">🔒 Modo leitura — ative Edição ou Simulação para alterar.</div>';}html+='<table class="sp-table"><thead><tr><th class="sp-col-assunto">Assunto</th><th class="sp-col-farol">Farol</th><th>Status / Observações</th><th style="width:70px"></th></tr></thead><tbody>';sd.rows.forEach(function(row,ri){var hcls=row.hidden?' sp-hidden':'';html+='<tr class="sp-row'+hcls+'" id="sprow_'+sid+'_'+ri+'"><td class="sp-col-assunto">'+row.topic+'</td><td class="sp-col-farol">';if(editMode||simMode){html+='<div class="farol-cycle-btn editable" data-farol="'+row.farol+'" onclick="cycleFarol(\''+sid+'\','+ri+')"></div>';}else{html+='<div class="farol-cycle-btn locked" data-farol="'+row.farol+'"></div>';}html+='</td><td>';if(editMode||simMode){html+='<div class="sp-status-cell" contenteditable="true" onblur="saveStatusText(\''+sid+'\','+ri+',this)">'+escHtml(row.texto)+'</div>';}else{html+='<div class="sp-status-cell" contenteditable="false">'+escHtml(row.texto)+'</div>';}html+='</td><td style="text-align:center">';if(editMode||simMode)html+='<button class="sp-hide-btn" onclick="hideRow(\''+sid+'\','+ri+')">Ocultar</button>';html+='</td></tr>';});html+='</tbody></table></div></td></tr>';return html;}
+function cycleFarol(sid,ri){if(!editMode&&!simMode)return;var nome=findNomeBySid(sid);if(!nome)return;var cur=statusData[nome].rows[ri].farol;var next=FAROL_CYCLE[(FAROL_CYCLE.indexOf(cur)+1)%FAROL_CYCLE.length];statusData[nome].rows[ri].farol=next;var btn=document.querySelector('#sprow_'+sid+'_'+ri+' .farol-cycle-btn');if(btn)btn.setAttribute('data-farol',next);if(!simMode)persistStatus();}
+function toggleStatusPanel(sid,nome){initStatusData(nome);var sd=statusData[nome];sd.open=!sd.open;var panelRow=document.getElementById('spr_'+sid);var btn=document.getElementById('spbtn_'+sid);if(btn){if(sd.open)btn.classList.add('open');else btn.classList.remove('open');}if(sd.open&&panelRow){var cell=panelRow.querySelector('.status-panel-cell');var cs=cell?cell.getAttribute('colspan'):TABLE_COLSPAN;var tmp=document.createElement('tbody');tmp.innerHTML=buildStatusPanel(nome,cs);var newRow=tmp.querySelector('.status-panel-row');panelRow.parentNode.replaceChild(newRow,panelRow);}else if(panelRow){panelRow.classList.remove('open');}}
+function saveStatusText(sid,ri,el){if(!editMode&&!simMode)return;var nome=findNomeBySid(sid);if(!nome)return;statusData[nome].rows[ri].texto=el.innerText.trim();if(!simMode)persistStatus();}
+function hideRow(sid,ri){var nome=findNomeBySid(sid);if(!nome)return;statusData[nome].rows[ri].hidden=true;var rowEl=document.getElementById('sprow_'+sid+'_'+ri);if(rowEl)rowEl.classList.add('sp-hidden');refreshShowAllBtn(sid,nome);if(!simMode)persistStatus();}
+function showAllRows(sid){var nome=findNomeBySid(sid);if(!nome)return;statusData[nome].rows.forEach(function(r){r.hidden=false;});var panelRow=document.getElementById('spr_'+sid);if(panelRow)panelRow.querySelectorAll('.sp-row').forEach(function(r){r.classList.remove('sp-hidden');});refreshShowAllBtn(sid,nome);if(!simMode)persistStatus();}
+function refreshShowAllBtn(sid,nome){var panelRow=document.getElementById('spr_'+sid);if(!panelRow)return;var hc=statusData[nome].rows.filter(function(r){return r.hidden;}).length;var ad=panelRow.querySelector('.sp-actions');if(!ad)return;var old=ad.querySelector('.sp-btn:not(.danger)');if(old)old.remove();if(hc>0){var b=document.createElement('button');b.className='sp-btn';b.textContent='👁 Reexibir todas ('+hc+' ocultas)';b.onclick=function(){showAllRows(sid);};ad.insertBefore(b,ad.firstChild);}}
+function findNomeBySid(sid){var f=null;Object.keys(statusData).forEach(function(n){if(safeId(n)===sid)f=n;});return f;}
+function refreshOpenPanels(){Object.keys(statusData).forEach(function(nome){if(statusData[nome].open){var sid=safeId(nome);var panelRow=document.getElementById('spr_'+sid);if(panelRow){var cell=panelRow.querySelector('.status-panel-cell');var cs=cell?cell.getAttribute('colspan'):TABLE_COLSPAN;var tmp=document.createElement('tbody');tmp.innerHTML=buildStatusPanel(nome,cs);var newRow=tmp.querySelector('.status-panel-row');panelRow.parentNode.replaceChild(newRow,panelRow);}}});}
+
+// ═══════════════════════════════════════════════════
+//  MODO EDIÇÃO
+// ═══════════════════════════════════════════════════
+function requestEdit(){document.getElementById('authModal').classList.add('active');document.getElementById('authPassword').value='';document.getElementById('authErr').style.display='none';setTimeout(function(){document.getElementById('authPassword').focus();},100);}
+function checkAuth(){if(document.getElementById('authPassword').value===EDIT_PASSWORD){closeModal('authModal');enterEdit();}else{document.getElementById('authErr').style.display='block';document.getElementById('authPassword').value='';document.getElementById('authPassword').focus();}}
+function enterEdit(){editMode=true;document.getElementById('editBadge').classList.add('active');document.getElementById('editBtn').style.display='none';document.getElementById('simBtn').style.display='none';document.getElementById('versionsBtn').style.display='inline-flex';document.getElementById('exitEditBtn').style.display='inline-flex';document.getElementById('saveBtn').style.display='inline-flex';document.getElementById('btnAddProject').style.display='inline-block';document.getElementById('editToolbar').classList.add('visible');document.getElementById('mainTable').classList.add('edit-mode');refreshOpenPanels();renderTable();showToast('✏️ Modo edição ativado');}
+function exitEdit(){editMode=false;editedRows.clear();closeModal('dateModal');closeModal('editProjectModal');document.getElementById('editBadge').classList.remove('active');document.getElementById('editBtn').style.display='inline-flex';document.getElementById('simBtn').style.display='inline-flex';document.getElementById('versionsBtn').style.display='none';document.getElementById('exitEditBtn').style.display='none';document.getElementById('saveBtn').style.display='none';document.getElementById('btnAddProject').style.display='none';document.getElementById('editToolbar').classList.remove('visible');document.getElementById('mainTable').classList.remove('edit-mode');document.getElementById('historyPanel').classList.remove('open');refreshOpenPanels();renderTable();showToast('Modo edição desativado');}
+
+// ═══════════════════════════════════════════════════
+//  MODO SIMULAÇÃO
+// ═══════════════════════════════════════════════════
+function requestSim(){document.getElementById('simAuthModal').classList.add('active');document.getElementById('simPassword').value='';document.getElementById('simErr').style.display='none';setTimeout(function(){document.getElementById('simPassword').focus();},100);}
+function checkSimAuth(){if(document.getElementById('simPassword').value===SIM_PASSWORD){closeModal('simAuthModal');enterSim();}else{document.getElementById('simErr').style.display='block';document.getElementById('simPassword').value='';document.getElementById('simPassword').focus();}}
+function enterSim(){
+  simData=JSON.parse(JSON.stringify(appData));
+  simEditedRows.clear();simMode=true;
+  document.body.classList.add('sim-active');
+  document.getElementById('simBadge').classList.add('active');
+  document.getElementById('simBanner').classList.add('active');
+  document.getElementById('editBtn').style.display='none';
+  document.getElementById('simBtn').style.display='none';
+  document.getElementById('simApplyHeaderBtn').style.display='inline-flex';
+  document.getElementById('exitSimBtn').style.display='inline-flex';
+  document.getElementById('simToolbar').classList.add('visible');
+  document.getElementById('mainTable').classList.add('edit-mode');
+  document.getElementById('ganttTitle').textContent='📅 Gantt de Lançamentos — 🔬 SIMULAÇÃO';
+  refreshOpenPanels();applyFilters();showToast('🔬 Simulação iniciada — dados originais protegidos',true);
+}
+function requestExitSim(){document.getElementById('simExitModal').classList.add('active');}
+function applySimDirect(){
+  appData=JSON.parse(JSON.stringify(simData));
+  sortByMeeting(appData);
+  exitSim();
+  autoSaveVersion('🔬 Simulação aplicada');
+  showToast('✅ Simulação aplicada e versão salva!');
+}
+document.getElementById('simApplyBtn').onclick=function(){
+  closeModal('simExitModal');
+  appData=JSON.parse(JSON.stringify(simData));
+  sortByMeeting(appData);
+  exitSim();
+  autoSaveVersion('🔬 Simulação aplicada');
+  showToast('✅ Simulação aplicada e versão salva!');
+};
+document.getElementById('simDiscardBtn').onclick=function(){
+  closeModal('simExitModal');
+  exitSim();
+  showToast('🗑 Simulação descartada — dados originais mantidos');
+};
+function exitSim(){
+  simMode=false;simData=null;simEditedRows.clear();
+  document.body.classList.remove('sim-active');
+  document.getElementById('simBadge').classList.remove('active');
+  document.getElementById('simBanner').classList.remove('active');
+  document.getElementById('editBtn').style.display='inline-flex';
+  document.getElementById('simBtn').style.display='inline-flex';
+  document.getElementById('simApplyHeaderBtn').style.display='none';
+  document.getElementById('exitSimBtn').style.display='none';
+  document.getElementById('simToolbar').classList.remove('visible');
+  document.getElementById('mainTable').classList.remove('edit-mode');
+  document.getElementById('ganttTitle').textContent='📅 Gantt de Lançamentos';
+  closeModal('dateModal');refreshOpenPanels();applyFilters();
+}
+
+// ═══════════════════════════════════════════════════
+//  NOVO PROJETO
+// ═══════════════════════════════════════════════════
+function openNewProjectModal(){['np_nome','np_regiao','np_mix','np_reuniaoPassagem','np_meeting','np_lancamento','np_inicioObra','np_unidades','np_vgvNom','np_vgvNomCbr','np_vgvVpCbr'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('np_segmento').value='';document.getElementById('np_status').value='';document.getElementById('np_coordenacao').value='';document.getElementById('np_doninho').value='';document.getElementById('np_pctCbr').value='100';document.getElementById('npErr').style.display='none';document.getElementById('newProjectModal').classList.add('active');setTimeout(function(){document.getElementById('np_nome').focus();},120);}
+function submitNewProject(){var nome=document.getElementById('np_nome').value.trim(),segmento=document.getElementById('np_segmento').value,status=document.getElementById('np_status').value,errEl=document.getElementById('npErr');if(!nome){errEl.textContent='⚠️ Nome do terreno é obrigatório.';errEl.style.display='block';document.getElementById('np_nome').focus();return;}if(!segmento){errEl.textContent='⚠️ Selecione um segmento.';errEl.style.display='block';return;}if(!status){errEl.textContent='⚠️ Selecione um status.';errEl.style.display='block';return;}var arr=activeData();var dup=arr.some(function(r){return r.nome.toLowerCase()===nome.toLowerCase();});if(dup){errEl.textContent='⚠️ Já existe um projeto com esse nome.';errEl.style.display='block';return;}var novo={nome:nome,segmento:segmento,status:status,coordenacao:document.getElementById('np_coordenacao').value,doninho:document.getElementById('np_doninho').value,regiao:document.getElementById('np_regiao').value.trim(),mix:document.getElementById('np_mix').value.trim(),reuniaoPassagem:document.getElementById('np_reuniaoPassagem').value||'',meeting:document.getElementById('np_meeting').value||'',lancamento:document.getElementById('np_lancamento').value||'',inicioObra:document.getElementById('np_inicioObra').value||'',unidades:parseFloat(document.getElementById('np_unidades').value)||0,vgvNom:parseFloat(document.getElementById('np_vgvNom').value)||0,vgvNomCbr:parseFloat(document.getElementById('np_vgvNomCbr').value)||0,vgvVpCbr:parseFloat(document.getElementById('np_vgvVpCbr').value)||0,pctCbr:parseFloat(document.getElementById('np_pctCbr').value)||100};arr.push(novo);sortByMeeting(arr);closeModal('newProjectModal');applyFilters();if(!simMode)autoSaveVersion('➕ Projeto adicionado: '+nome);showToast('✅ "'+nome+'" adicionado!',simMode);}
+
+// ═══════════════════════════════════════════════════
+//  FILTROS
+// ═══════════════════════════════════════════════════
+var PANELS=['ano','status','coord','doninho','seg'];
+function togglePanel(e,key){e.stopPropagation();var isOpen=document.getElementById('pnl-'+key).classList.contains('open');PANELS.forEach(function(k){document.getElementById('pnl-'+k).classList.remove('open');});if(!isOpen)document.getElementById('pnl-'+key).classList.add('open');}
+document.addEventListener('click',function(e){PANELS.forEach(function(k){var p=document.getElementById('pnl-'+k);if(p&&!p.contains(e.target)&&e.target.id!=='trg-'+k)p.classList.remove('open');});});
+function getChecked(key){return Array.from(document.querySelectorAll('#pnl-'+key+' input[type=checkbox]:checked')).map(function(c){return c.value;});}
+function filterChange(key){var vals=getChecked(key);var trg=document.getElementById('trg-'+key);if(vals.length===0){trg.textContent=key==='coord'?'Todas':'Todos';trg.classList.remove('has-sel');}else{trg.textContent=vals.length===1?vals[0]:vals.length+' selecionados';trg.classList.add('has-sel');}applyFilters();}
+function clearFilter(key){document.querySelectorAll('#pnl-'+key+' input[type=checkbox]').forEach(function(c){c.checked=false;});filterChange(key);}
+function resetFilters(){PANELS.forEach(function(k){clearFilter(k);});document.getElementById('fSearch').value='';applyFilters();}
+function applyFilters(){var src=activeData();var fAno=getChecked('ano'),fSt=getChecked('status'),fCo=getChecked('coord'),fDo=getChecked('doninho'),fSe=getChecked('seg');var fQ=document.getElementById('fSearch').value.toLowerCase();filteredData=src.filter(function(r){if(fAno.length&&(!r.lancamento||!fAno.some(function(a){return r.lancamento.startsWith(a);})))return false;if(fSt.length&&fSt.indexOf(r.status)===-1)return false;if(fCo.length&&fCo.indexOf(r.coordenacao)===-1)return false;if(fDo.length&&fDo.indexOf(r.doninho)===-1)return false;if(fSe.length&&fSe.indexOf(r.segmento)===-1)return false;if(fQ&&r.nome.toLowerCase().indexOf(fQ)===-1)return false;return true;});if(sortKey&&sortKey!=='meeting')doSort(sortKey,false);updateKPIs();renderGantt();renderTable();}
+function sortTable(key){if(key==='meeting'){sortByMeeting(activeData());sortKey=null;sortDir=1;applyFilters();return;}if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=1;}doSort(key,true);}
+function doSort(key,rerender){filteredData.sort(function(a,b){var va=a[key]!=null?a[key]:'',vb=b[key]!=null?b[key]:'';if(typeof va==='number'||!isNaN(parseFloat(va)))return((parseFloat(va)||0)-(parseFloat(vb)||0))*sortDir;return String(va).localeCompare(String(vb),'pt-BR')*sortDir;});if(rerender)renderTable();}
+
+// ═══════════════════════════════════════════════════
+//  KPIs
+// ═══════════════════════════════════════════════════
+function updateKPIs(){var d=filteredData.filter(function(r){return KPI_STATUSES.indexOf(r.status)!==-1;});if(ganttSelected.size>0){d=d.filter(function(r){return ganttSelected.has(r.nome);});document.getElementById('ganttSelNote').classList.add('visible');document.getElementById('ganttSelText').textContent=ganttSelected.size+' projeto(s) selecionado(s) no Gantt — indicadores filtrados.';}else{document.getElementById('ganttSelNote').classList.remove('visible');}document.getElementById('kpiTotal').textContent=fmtNum(d.length);document.getElementById('kpiVgvNom').textContent=fmtCurVGV(d.reduce(function(s,r){return s+(r.vgvNom||0);},0));document.getElementById('kpiVgvCbr').textContent=fmtCurVGV(d.reduce(function(s,r){return s+(r.vgvNomCbr||0);},0));document.getElementById('kpiVgvVp').textContent=fmtCurVGV(d.reduce(function(s,r){return s+(r.vgvVpCbr||0);},0));document.getElementById('kpiUnidades').textContent=fmtNum(d.reduce(function(s,r){return s+(r.unidades||0);},0));var tempos=d.filter(function(r){return r.reuniaoPassagem&&r.lancamento;}).map(function(r){return diffMonths(r.reuniaoPassagem,r.lancamento);});document.getElementById('kpiTempo').textContent=tempos.length?Math.round(tempos.reduce(function(s,v){return s+v;},0)/tempos.length)+'m':'—';}
+
+// ═══════════════════════════════════════════════════
+//  GANTT
+// ═══════════════════════════════════════════════════
+function ganttZoom(dir){ganttColW=Math.max(20,Math.min(150,ganttColW+dir*12));renderGantt();}
+function ganttScrollToday(){var c=document.getElementById('ganttContainer');var fl=c.querySelector('.gantt-today-line');if(fl){c.scrollLeft=fl.parentNode.offsetLeft+parseFloat(fl.style.left)-200;}}
+function toggleGanttSelMode(){ganttSelMode=!ganttSelMode;var btn=document.getElementById('ganttSelModeBtn');btn.classList.toggle('active',ganttSelMode);btn.textContent=ganttSelMode?'✓ Modo seleção ativo':'☐ Selecionar projetos';if(!ganttSelMode){ganttSelected.clear();updateKPIs();renderGantt();}}
+function clearGanttSel(){ganttSelected.clear();updateKPIs();document.querySelectorAll('.gantt-data-row').forEach(function(r){r.classList.remove('g-selected');});}
+function toggleGanttRow(nome){if(!ganttSelMode)return;if(ganttSelected.has(nome))ganttSelected.delete(nome);else ganttSelected.add(nome);updateKPIs();document.querySelectorAll('.gantt-data-row').forEach(function(r){r.classList.toggle('g-selected',ganttSelected.has(r.dataset.nome));});}
+function renderGantt(){var data=filteredData,container=document.getElementById('ganttContainer');if(!data.length){container.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-soft)">Nenhum projeto para exibir.</div>';return;}var allD=[];data.forEach(function(r){if(r.meeting)allD.push(new Date(r.meeting+'T00:00:00'));if(r.lancamento)allD.push(new Date(r.lancamento+'T00:00:00'));});if(!allD.length){container.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-soft)">Sem datas para exibir.</div>';return;}var minD=new Date(Math.min.apply(null,allD));minD.setDate(1);var maxD=new Date(Math.max.apply(null,allD));maxD.setMonth(maxD.getMonth()+2);maxD.setDate(1);var months=[],cur=new Date(minD);while(cur<=maxD){months.push(new Date(cur));cur.setMonth(cur.getMonth()+1);}var fY=minD.getFullYear(),lY=new Date(Math.max.apply(null,allD)).getFullYear();var colW;if(lY-fY+1<=2){var wW=document.getElementById('ganttWrapper').offsetWidth;colW=Math.max(Math.floor((wW-LBL_W-2)/months.length),30);}else{colW=ganttColW;}var totalW=months.length*colW,wrapW=LBL_W+totalW;var today=new Date(),todayOff=((today-minD)/(1000*60*60*24*30.44))*colW;var showToday=(todayOff>=0&&todayOff<=totalW);var MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];var html='<div class="gantt-inner-wrap" style="min-width:'+wrapW+'px">';html+='<div class="gantt-head-row"><div class="gantt-lbl-hdr">Projeto</div><div class="gantt-months-hdr">';months.forEach(function(m){var iT=m.getFullYear()===today.getFullYear()&&m.getMonth()===today.getMonth();html+='<div class="gantt-month-cell'+(iT?' today-col':'')+'" style="width:'+colW+'px">'+MN[m.getMonth()]+'<br><span style="font-size:.62rem">'+m.getFullYear()+'</span></div>';});html+='</div></div>';var isFirstRow=true;data.forEach(function(r){if(!r.meeting&&!r.lancamento)return;var isSel=ganttSelected.has(r.nome);var start=r.meeting?new Date(r.meeting+'T00:00:00'):null,end=r.lancamento?new Date(r.lancamento+'T00:00:00'):null;var barLeft=0,barW=0;if(start&&end){barLeft=((start-minD)/(1000*60*60*24*30.44))*colW;barW=Math.max(colW*0.5,((end-start)/(1000*60*60*24*30.44))*colW);}else if(start){barLeft=((start-minD)/(1000*60*60*24*30.44))*colW;barW=colW;}var nomeEsc=r.nome.replace(/\\/g,'\\\\').replace(/'/g,"\\'");html+='<div class="gantt-data-row'+(isSel?' g-selected':'')+'" data-nome="'+r.nome+'" onclick="toggleGanttRow(\''+nomeEsc+'\')">';html+='<div class="gantt-row-lbl" title="'+r.nome+'">'+r.nome+'<small>'+(r.regiao||'')+' · '+r.status+'</small></div>';html+='<div class="gantt-bar-area">';months.forEach(function(m,i){html+='<div class="gantt-grid-ln" style="left:'+(i*colW)+'px"></div>';});if(showToday){html+='<div class="gantt-today-line" style="left:'+todayOff+'px"></div>';if(isFirstRow){html+='<div class="gantt-today-tag" style="left:'+(todayOff+4)+'px">HOJE</div>';isFirstRow=false;}}html+='<div class="gantt-bar '+barClass(r.status)+'" style="left:'+barLeft+'px;width:'+barW+'px" data-nome="'+r.nome+'" data-doninho="'+(r.doninho||'—')+'" data-meeting="'+fmtDate(r.meeting)+'" data-lanc="'+fmtDate(r.lancamento)+'" data-vgv="'+fmtCurVGV(r.vgvNomCbr)+'" data-seg="'+r.segmento+'" data-status="'+r.status+'" onmouseenter="showTip(event,this)" onmouseleave="hideTip()" onclick="event.stopPropagation()"></div>';html+='</div></div>';});html+='</div>';container.innerHTML=html;}
+window.addEventListener('resize',function(){renderGantt();});
+function showTip(e,el){var t=document.getElementById('tooltip');t.innerHTML='<strong>'+el.dataset.nome+'</strong>'+'👤 '+el.dataset.doninho+'<br>'+'📅 Meeting: '+el.dataset.meeting+'<br>'+'🚀 Lançamento: '+el.dataset.lanc+'<br>'+'💰 VGV %CBR: '+el.dataset.vgv+'<br>'+'🏷 '+el.dataset.seg+'<br>'+'✅ '+el.dataset.status;t.style.display='block';t.style.left=(e.clientX+14)+'px';t.style.top=(e.clientY-10)+'px';}
+function hideTip(){document.getElementById('tooltip').style.display='none';}
+document.addEventListener('mousemove',function(e){var t=document.getElementById('tooltip');if(t.style.display==='block'){t.style.left=(e.clientX+14)+'px';t.style.top=(e.clientY-10)+'px';}});
+
+// ═══════════════════════════════════════════════════
+//  TABELA
+// ═══════════════════════════════════════════════════
+function renderTable(){
+var tbody=document.getElementById('tableBody');
+document.getElementById('tableCount').textContent=filteredData.length;
+if(!filteredData.length){tbody.innerHTML='<tr><td colspan="'+TABLE_COLSPAN+'" style="text-align:center;padding:32px;color:var(--text-soft)">Nenhum projeto encontrado.</td></tr>';return;}
+var src=activeData();var html='';
+filteredData.forEach(function(r){
+var gi=src.indexOf(r);var ed=simMode?simEditedRows.has(gi):editedRows.has(gi);
+var meses=diffMonths(r.reuniaoPassagem,r.lancamento);var pct=r.pctCbr!=null?r.pctCbr+'%':'—';
+var sid=safeId(r.nome),hasSP=hasStatusPanel(r);
+var statusCell;
+if(editMode){var opts=['Lançado','Previsto','Coringa','Em contratação'].map(function(s){return'<option'+(r.status===s?' selected':'')+'>'+s+'</option>';}).join('');statusCell='<select onchange="onSelChange('+gi+',\'status\',this.value)" style="border:none;background:transparent;font-size:.8rem;cursor:pointer">'+opts+'</select>';}
+else{statusCell='<span class="status-pill '+pillClass(r.status)+'">'+(r.status||'—')+'</span>';}
+var rowCls=ed?(simMode?'row-sim-edited':'row-edited'):'';
+function dc(field){var v=r[field]||'',txt=v?fmtDate(v):'—';if(editMode||simMode)return'<td class="td-date-edit" onclick="openDateModal('+gi+',\''+field+'\',this)" title="Clique para editar">'+txt+'</td>';return'<td style="font-variant-numeric:tabular-nums">'+txt+'</td>';}
+var ce=(editMode&&!simMode)?'contenteditable="true"':'';
+html+='<tr class="'+rowCls+'" data-idx="'+gi+'" onblur="onCellBlur(event,'+gi+')">';
+if(hasSP){var isOpen=statusData[r.nome]&&statusData[r.nome].open;html+='<td style="text-align:center;padding:4px"><button class="btn-expand-status'+(isOpen?' open':'')+'" id="spbtn_'+sid+'" onclick="toggleStatusPanel(\''+sid+'\',\''+escQ(r.nome)+'\')" title="Status">+</button></td>';}else{html+='<td></td>';}
+html+='<td style="text-align:center;padding:4px"><button class="btn-edit-row" onclick="event.stopPropagation();openEditProjectModal('+gi+')" title="Editar projeto">✏️</button></td>';
+html+='<td style="text-align:center;padding:4px"><button class="btn-del-row" onclick="event.stopPropagation();requestDelete(\''+escQ(r.nome)+'\')" title="Excluir">🗑</button></td>';
+html+='<td '+ce+' data-field="nome">'+(r.nome||'')+'</td>';
+html+='<td style="padding:4px 7px">'+segmentoCell(r,gi)+'</td>';
+html+='<td '+ce+' data-field="coordenacao">'+(r.coordenacao||'')+'</td>';
+html+='<td '+ce+' data-field="doninho">'+(r.doninho||'')+'</td>';
+html+='<td data-field="status">'+statusCell+'</td>';
+html+='<td '+ce+' data-field="mix">'+(r.mix||'')+'</td>';
+html+=dc('reuniaoPassagem');html+=dc('meeting');html+=dc('lancamento');
+html+='<td '+ce+' data-field="unidades" style="text-align:right">'+(r.unidades!=null?r.unidades:'')+'</td>';
+html+='<td '+ce+' data-field="vgvNom" style="text-align:right">'+fmtVGV(r.vgvNom)+'</td>';
+html+='<td '+ce+' data-field="vgvNomCbr" style="text-align:right">'+fmtVGV(r.vgvNomCbr)+'</td>';
+html+='<td '+ce+' data-field="vgvVpCbr" style="text-align:right">'+fmtVGV(r.vgvVpCbr)+'</td>';
+html+='<td '+ce+' data-field="pctCbr" style="text-align:right">'+pct+'</td>';
+html+='<td class="td-meses" style="text-align:center">'+farolHTML(meses)+'</td>';
+html+=dc('inicioObra');
+html+='</tr>';
+if(hasSP)html+=buildStatusPanel(r.nome,TABLE_COLSPAN);
+});
+tbody.innerHTML=html;
+}
+
+function onCellBlur(e,idx){
+  if(!editMode||simMode)return;
+  var td=e.target,field=td.dataset.field;
+  if(!field)return;
+  var nv=td.textContent.trim();
+  var cur=String(appData[idx][field]!=null?appData[idx][field]:'');
+  if(cur===nv)return;
+  if(['unidades','vgvNom','vgvNomCbr','vgvVpCbr','pctCbr'].indexOf(field)!==-1){appData[idx][field]=parseFloat(nv)||0;}
+  else{appData[idx][field]=nv;}
+  editedRows.add(idx);
+  td.closest('tr').classList.add('row-edited');
+  updateKPIs();
+  persistMain();
+}
+
+function onSelChange(idx,field,val){
+  activeData()[idx][field]=val;
+  if(simMode)simEditedRows.add(idx);else editedRows.add(idx);
+  if(field==='status'||field==='segmento'){applyFilters();}
+  else{if(!simMode)persistMain();}
+}
+
+// ═══════════════════════════════════════════════════
+//  VERSÕES / HISTÓRICO
+// ═══════════════════════════════════════════════════
+function snapshotNow(){return{data:JSON.parse(JSON.stringify(appData)),statusData:JSON.parse(JSON.stringify(statusData))};}
+function autoSaveVersion(label){var now=new Date();var snap=snapshotNow();var entry={id:now.getTime(),label:label+' — '+now.toLocaleString('pt-BR'),date:now.toISOString(),data:snap.data,statusData:snap.statusData,auto:true};versions.unshift(entry);persistMain();renderHistoryList();}
+function saveVersion(){var now=new Date();var mc=versions.filter(function(v){return!v.auto;}).length;var label='Versão '+(mc+1)+' — '+now.toLocaleString('pt-BR');var snap=snapshotNow();var entry={id:now.getTime(),label:label,date:now.toISOString(),data:snap.data,statusData:snap.statusData,editedCount:editedRows.size,auto:false};versions.unshift(entry);editedRows.clear();persistMain();renderHistoryList();applyFilters();showToast('💾 '+label+' salva!');}
+function renderHistoryList(){var list=document.getElementById('historyList');if(!versions.length){list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-soft);font-size:.82rem">Nenhuma versão salva ainda.<br><br>Use <strong>💾 Salvar versão</strong> para criar um ponto de restauração.</div>';return;}list.innerHTML='';versions.forEach(function(v,i){var div=document.createElement('div');div.className='history-item'+(i===0?' current':'');var nP=v.data?v.data.length:0,nS=v.statusData?Object.keys(v.statusData).length:0;div.innerHTML='<div class="history-item-title">'+escHtml(v.label)+'</div>'+'<div class="history-item-meta">'+new Date(v.date).toLocaleString('pt-BR')+'</div>'+'<div class="history-item-meta">'+nP+' projetos · '+nS+' painéis</div>'+'<div class="history-item-badges"><span class="history-badge '+(v.auto?'auto':'manual')+'">'+(v.auto?'AUTO':'MANUAL')+'</span>'+(i===0?'<span class="history-badge current">ATUAL</span>':'')+(i!==0?'<button class="history-restore-btn">↩ Restaurar</button>':'')+'</div>';if(i!==0){div.querySelector('.history-restore-btn').onclick=function(){requestRestore(v.id);};}list.appendChild(div);});}
+function toggleHistory(){var p=document.getElementById('historyPanel');p.classList.toggle('open');if(p.classList.contains('open'))renderHistoryList();}
+
+// ═══════════════════════════════════════════════════
+//  EXPORT / IMPORT
+// ═══════════════════════════════════════════════════
+function exportJSON(){var b=new Blob([JSON.stringify({exportDate:new Date().toISOString(),data:filteredData,statusData:statusData},null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='living_landbank_'+new Date().toISOString().slice(0,10)+'.json';a.click();}
+function exportCSV(){var cols=['nome','segmento','coordenacao','doninho','status','mix','reuniaoPassagem','meeting','lancamento','unidades','vgvNom','vgvNomCbr','vgvVpCbr','pctCbr','inicioObra'];var rows=activeData().map(function(r){return cols.map(function(c){return'"'+String(r[c]!=null?r[c]:'').replace(/"/g,'""')+'"';}).join(';');});var b=new Blob(['\uFEFF'+[cols.join(';')].concat(rows).join('\n')],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='living_landbank_'+(simMode?'SIMULACAO_':'')+new Date().toISOString().slice(0,10)+'.csv';a.click();showToast('📥 CSV exportado!',simMode);}
+function exportFullBackup(){var payload={exportDate:new Date().toISOString(),appData:appData,statusData:statusData,versions:versions};var b=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='living_landbank_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();showToast('📦 Backup completo exportado!');}
+function triggerImport(){document.getElementById('importFileInput').value='';document.getElementById('importFileInput').click();}
+function handleImportFile(event){var file=event.target.files[0];if(!file)return;if(!file.name.endsWith('.json')){showToast('⚠️ Selecione um arquivo .json válido.');return;}var reader=new FileReader();reader.onload=function(e){var parsed;try{parsed=JSON.parse(e.target.result);}catch(err){showToast('⚠️ Arquivo inválido.');return;}var iD=parsed.appData||parsed.data||null;var iS=parsed.statusData||null;var iV=parsed.versions||null;if(!iD||!Array.isArray(iD)||!iD.length){showToast('⚠️ Arquivo sem dados reconhecíveis.');return;}appData=JSON.parse(JSON.stringify(iD));if(iS&&typeof iS==='object')statusData=JSON.parse(JSON.stringify(iS));if(iV&&Array.isArray(iV)&&iV.length)versions=iV.filter(function(v){return v.data&&Array.isArray(v.data)&&v.data.length>0;});editedRows.clear();sortByMeeting(appData);persistMain();if(iS)persistStatus();applyFilters();renderHistoryList();document.getElementById('historyPanel').classList.remove('open');showToast('✅ Backup importado! '+appData.length+' projetos.');};reader.readAsText(file,'UTF-8');}
+
+// ═══════════════════════════════════════════════════
+//  RAW DATA (fallback)
+// ═══════════════════════════════════════════════════
+var RAW_DATA=[{nome:"Padre Raposo",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"71, 82 e 120m²",regiao:"Mooca",reuniaoPassagem:"2020-09-11",meeting:"2023-02-02",lancamento:"2023-03-11",status:"Lançado",inicioObra:"2024-01-01",vgvNom:155,vgvNomCbr:155,unidades:162,vgvVpCbr:126,pctCbr:100},{nome:"Sorocabanos",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Wericles Albano",mix:"75, 100 e 123m²",regiao:"Ipiranga",reuniaoPassagem:"2021-05-11",meeting:"2023-03-23",lancamento:"2023-04-22",status:"Lançado",inicioObra:"2024-01-01",vgvNom:296,vgvNomCbr:222,unidades:261,vgvVpCbr:240,pctCbr:75},{nome:"Marquês de Olinda II",segmento:"Padrão",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"43, 63, 69, 75 e 87m²",regiao:"Ipiranga",reuniaoPassagem:"2021-09-14",meeting:"2023-03-23",lancamento:"2023-04-27",status:"Lançado",inicioObra:"2024-02-01",vgvNom:268,vgvNomCbr:147.4,unidades:361,vgvVpCbr:218,pctCbr:55},{nome:"Jalisco",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Giulia Oliveira",mix:"76, 100 e 122m²",regiao:"Anália Franco",reuniaoPassagem:"2019-09-01",meeting:"2023-05-31",lancamento:"2023-06-24",status:"Lançado",inicioObra:"2024-06-01",vgvNom:240,vgvNomCbr:200,unidades:252,vgvVpCbr:152.72,pctCbr:100},{nome:"Adolfo Pinheiro",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Wericles Albano",mix:"44, 58, 67, 74 e 84m²",regiao:"Brooklin",reuniaoPassagem:"2022-04-29",meeting:"2023-08-09",lancamento:"2023-09-03",status:"Lançado",inicioObra:"2024-08-01",vgvNom:195,vgvNomCbr:132.75,unidades:236,vgvVpCbr:106.12,pctCbr:75},{nome:"Av. Industrial - Lote 02",segmento:"ABC",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"74, 90, 104 e 126m²",regiao:"Santo André",reuniaoPassagem:"",meeting:"2023-08-16",lancamento:"2023-09-16",status:"Lançado",inicioObra:"2024-07-01",vgvNom:283,vgvNomCbr:237,unidades:282,vgvVpCbr:186.72,pctCbr:100},{nome:"Passos",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Wericles Albano",mix:"74, 95 e 115m²",regiao:"Belém",reuniaoPassagem:"2022-04-07",meeting:"2023-09-20",lancamento:"2023-10-15",status:"Lançado",inicioObra:"2024-08-01",vgvNom:235,vgvNomCbr:138,unidades:231,vgvVpCbr:111.09,pctCbr:75},{nome:"Salvador Simões",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"70 e 84m²",regiao:"Ipiranga",reuniaoPassagem:"2021-03-10",meeting:"2023-10-19",lancamento:"2023-11-11",status:"Lançado",inicioObra:"2024-08-01",vgvNom:136,vgvNomCbr:136,unidades:164,vgvVpCbr:111,pctCbr:100},{nome:"Cláudio Rossi I",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Aline Furlaneto",mix:"86, 106 e 135m²",regiao:"Vila Mariana",reuniaoPassagem:"2021-05-11",meeting:"2024-01-31",lancamento:"2024-02-27",status:"Lançado",inicioObra:"2024-12-01",vgvNom:134.8,vgvNomCbr:134.8,unidades:90,vgvVpCbr:112,pctCbr:100},{nome:"Sumidouro",segmento:"Full",coordenacao:"Artur Dorfman",doninho:"Giulia Oliveira",mix:"24 a 29m²",regiao:"Pinheiros",reuniaoPassagem:"2023-02-14",meeting:"2024-04-10",lancamento:"2024-04-19",status:"Lançado",inicioObra:"2025-02-01",vgvNom:173,vgvNomCbr:169,unidades:620,vgvVpCbr:139.55,pctCbr:100},{nome:"Nova Independência",segmento:"Full",coordenacao:"Artur Dorfman",doninho:"Giulia Oliveira",mix:"24, 28 e 49m²",regiao:"Brooklin",reuniaoPassagem:"2023-06-16",meeting:"2024-07-15",lancamento:"2024-08-03",status:"Lançado",inicioObra:"2025-06-01",vgvNom:180,vgvNomCbr:180,unidades:568,vgvVpCbr:146,pctCbr:100},{nome:"Madre de Deus",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Wericles Albano",mix:"75, 84 e 134m²",regiao:"Mooca",reuniaoPassagem:"2023-01-26",meeting:"2024-08-05",lancamento:"2024-08-31",status:"Lançado",inicioObra:"2025-06-01",vgvNom:162,vgvNomCbr:121.5,unidades:172,vgvVpCbr:97.13,pctCbr:75},{nome:"Nazaré II",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"135 e 156m² + Studios",regiao:"Ipiranga",reuniaoPassagem:"2022-12-02",meeting:"2024-09-04",lancamento:"2024-09-28",status:"Lançado",inicioObra:"2025-07-01",vgvNom:166,vgvNomCbr:155,unidades:126,vgvVpCbr:124.48,pctCbr:100},{nome:"Acuruí",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"144m² + Studios",regiao:"Anália Franco",reuniaoPassagem:"2023-07-06",meeting:"2024-09-21",lancamento:"2024-10-12",status:"Lançado",inicioObra:"2025-08-01",vgvNom:145,vgvNomCbr:145,unidades:112,vgvVpCbr:118,pctCbr:100},{nome:"Castro Alves",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"62, 74 e 86m² + Studios",regiao:"Aclimação",reuniaoPassagem:"2023-09-14",meeting:"2024-10-22",lancamento:"2024-11-12",status:"Lançado",inicioObra:"2025-09-01",vgvNom:237,vgvNomCbr:237,unidades:234,vgvVpCbr:190,pctCbr:100},{nome:"Borges Lagoa",segmento:"Compactos",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"19, 24, 28 e 37m²",regiao:"Vila Clementino",reuniaoPassagem:"2023-10-06",meeting:"2024-10-22",lancamento:"2024-11-23",status:"Lançado",inicioObra:"2025-09-01",vgvNom:192,vgvNomCbr:127,unidades:609,vgvVpCbr:100.9,pctCbr:75},{nome:"Fiandeiras",segmento:"Full",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"25 e 36m² + Corporativo",regiao:"Vila Olímpia",reuniaoPassagem:"2023-10-27",meeting:"2024-11-27",lancamento:"2024-12-05",status:"Lançado",inicioObra:"2025-10-01",vgvNom:210,vgvNomCbr:157.5,unidades:566,vgvVpCbr:126.75,pctCbr:75},{nome:"Av. Industrial - Lt. 1 - F1",segmento:"ABC",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"52, 62, 74 e 102m²",regiao:"Santo André",reuniaoPassagem:"",meeting:"2025-01-27",lancamento:"2025-02-08",status:"Lançado",inicioObra:"2026-02-01",vgvNom:271,vgvNomCbr:227,unidades:336,vgvVpCbr:177.2,pctCbr:100},{nome:"Av. Morumbi",segmento:"Full",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"17, 24, 30 e 38m²",regiao:"Chucri Zaidan",reuniaoPassagem:"2023-11-07",meeting:"2025-01-30",lancamento:"2025-02-08",status:"Lançado",inicioObra:"2026-02-01",vgvNom:177,vgvNomCbr:132,unidades:532,vgvVpCbr:106,pctCbr:100},{nome:"Av. Tucuruvi",segmento:"Padrão",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"37, 60, 69 e 87m²",regiao:"Tucuruvi",reuniaoPassagem:"2023-10-27",meeting:"2025-03-13",lancamento:"2025-03-22",status:"Lançado",inicioObra:"2026-01-01",vgvNom:153,vgvNomCbr:114.75,unidades:230,vgvVpCbr:87.45,pctCbr:75},{nome:"Manuel Correia",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"60, 69 e 84m²",regiao:"Freguesia do Ó",reuniaoPassagem:"2023-08-17",meeting:"2025-04-03",lancamento:"2025-04-26",status:"Lançado",inicioObra:"2026-02-01",vgvNom:151,vgvNomCbr:151,unidades:252,vgvVpCbr:117,pctCbr:100},{nome:"Apeninos II",segmento:"Full",coordenacao:"Artur Dorfman",doninho:"Wericles Albano",mix:"24, 27 e 36m²",regiao:"Aclimação",reuniaoPassagem:"2023-12-14",meeting:"2025-05-15",lancamento:"2025-05-17",status:"Lançado",inicioObra:"2026-03-01",vgvNom:157,vgvNomCbr:117.75,unidades:607,vgvVpCbr:91,pctCbr:75},{nome:"Indiana",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Giulia Oliveira",mix:"71, 88, 111 e 127m²",regiao:"Brooklin",reuniaoPassagem:"2024-06-26",meeting:"2025-06-04",lancamento:"2025-06-25",status:"Lançado",inicioObra:"2026-04-01",vgvNom:259,vgvNomCbr:259,unidades:210,vgvVpCbr:198,pctCbr:100},{nome:"Av. Industrial - Lt. 1 - F2",segmento:"ABC",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"52, 62 e 74m²",regiao:"Santo André",reuniaoPassagem:"",meeting:"2025-06-11",lancamento:"2025-06-14",status:"Lançado",inicioObra:"2026-02-01",vgvNom:182,vgvNomCbr:152,unidades:252,vgvVpCbr:119.01,pctCbr:100},{nome:"Barão do Triunfo",segmento:"Padrão",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"149m² + Studios",regiao:"Campo Belo",reuniaoPassagem:"2024-06-26",meeting:"2025-08-27",lancamento:"2025-09-16",status:"Lançado",inicioObra:"2026-07-01",vgvNom:191,vgvNomCbr:191,unidades:102,vgvVpCbr:148,pctCbr:100},{nome:"Av. Mascote",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Wericles Albano",mix:"75, 87 e 145m² + Studios",regiao:"Vila Mascote",reuniaoPassagem:"2023-05-17",meeting:"2025-09-18",lancamento:"2025-10-08",status:"Lançado",inicioObra:"2026-10-01",vgvNom:281,vgvNomCbr:192.75,unidades:234,vgvVpCbr:144.22,pctCbr:75},{nome:"Pensilvânia",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"47, 69, 75 e 88m²",regiao:"Brooklin",reuniaoPassagem:"2024-08-29",meeting:"2025-10-23",lancamento:"2025-11-01",status:"Lançado",inicioObra:"2026-09-01",vgvNom:263,vgvNomCbr:263,unidades:253,vgvVpCbr:203,pctCbr:100},{nome:"Ouvidor Peleja",segmento:"Padrão",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"69, 79, 88 e 93m²",regiao:"Vila Mariana",reuniaoPassagem:"2024-10-01",meeting:"2026-01-28",lancamento:"2026-02-21",status:"Lançado",inicioObra:"2026-12-01",vgvNom:211,vgvNomCbr:211,unidades:207,vgvVpCbr:163,pctCbr:100},{nome:"Rua Butantã",segmento:"Full",coordenacao:"Artur Dorfman",doninho:"Giulia Oliveira",mix:"24 e 37m²",regiao:"Pinheiros",reuniaoPassagem:"2024-02-08",meeting:"2026-04-06",lancamento:"2026-04-18",status:"Lançado",inicioObra:"2027-02-01",vgvNom:243,vgvNomCbr:243,unidades:745,vgvVpCbr:199,pctCbr:100},{nome:"Fernandes Moreira II",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"77, 89, 127 e 139m²",regiao:"Chácara S. Antônio",reuniaoPassagem:"2024-12-06",meeting:"2026-04-22",lancamento:"2026-05-16",status:"Lançado",inicioObra:"2027-05-01",vgvNom:280,vgvNomCbr:280,unidades:217,vgvVpCbr:213,pctCbr:100},{nome:"Chicago",segmento:"Padrão",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"77, 87, 104, 133 e 147m²",regiao:"Brooklin",reuniaoPassagem:"2024-11-01",meeting:"2026-05-20",lancamento:"2026-06-13",status:"Lançado",inicioObra:"2027-04-01",vgvNom:348,vgvNomCbr:348,unidades:218,vgvVpCbr:266,pctCbr:100},{nome:"Guaratuba",segmento:"Compactos",coordenacao:"Artur Dorfman",doninho:"Giulia Oliveira",mix:"24 e 36m²",regiao:"Conceição",reuniaoPassagem:"2025-07-01",meeting:"2026-08-05",lancamento:"2026-08-22",status:"Previsto",inicioObra:"2027-06-01",vgvNom:195,vgvNomCbr:195,unidades:720,vgvVpCbr:154,pctCbr:100},{nome:"Antônio das Chagas",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Wericles Albano",mix:"48, 65, 74 e 89m²",regiao:"Chácara S. Antônio",reuniaoPassagem:"2024-07-26",meeting:"2026-08-26",lancamento:"2026-09-19",status:"Previsto",inicioObra:"2027-07-01",vgvNom:219,vgvNomCbr:164.25,unidades:225,vgvVpCbr:126,pctCbr:75},{nome:"Canário Moema",segmento:"Compactos",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"28, 31, 35 e 44m²",regiao:"Moema",reuniaoPassagem:"2025-04-11",meeting:"2026-09-23",lancamento:"2026-10-10",status:"Previsto",inicioObra:"2027-08-01",vgvNom:293,vgvNomCbr:293,unidades:787,vgvVpCbr:225,pctCbr:100},{nome:"Vahia de Abreu",segmento:"Full",coordenacao:"Artur Dorfman",doninho:"Giulia Oliveira",mix:"25 e 32m²",regiao:"Vila Olímpia",reuniaoPassagem:"2025-03-07",meeting:"2026-10-14",lancamento:"2026-10-31",status:"Previsto",inicioObra:"2027-08-01",vgvNom:174,vgvNomCbr:174,unidades:526,vgvVpCbr:140,pctCbr:100},{nome:"Dona Inácia Uchôa I",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Wericles Albano",mix:"65, 75 e 89m² + Studios",regiao:"Vila Mariana",reuniaoPassagem:"2025-01-09",meeting:"2026-11-04",lancamento:"2026-11-28",status:"Previsto",inicioObra:"2027-09-01",vgvNom:232,vgvNomCbr:232,unidades:336,vgvVpCbr:132,pctCbr:100},{nome:"Otávio Tarquinio (Coringa)",segmento:"Coringa",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"69, 88, 105 e 127m² + Studios",regiao:"Campo Belo",reuniaoPassagem:"2025-05-09",meeting:"2026-11-04",lancamento:"2026-11-28",status:"Coringa",inicioObra:"2027-09-01",vgvNom:249,vgvNomCbr:249,unidades:198,vgvVpCbr:191,pctCbr:100},{nome:"Otávio Tarquinio",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"69, 88, 105 e 127m² + Studios",regiao:"Campo Belo",reuniaoPassagem:"2025-05-09",meeting:"2027-01-27",lancamento:"2027-02-20",status:"Previsto",inicioObra:"2027-12-01",vgvNom:249,vgvNomCbr:249,unidades:198,vgvVpCbr:191,pctCbr:100},{nome:"Alvorada",segmento:"Full",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"25 e 31m²",regiao:"Vila Olímpia",reuniaoPassagem:"2025-07-04",meeting:"2027-02-24",lancamento:"2027-03-13",status:"Previsto",inicioObra:"2028-01-01",vgvNom:182,vgvNomCbr:182,unidades:687,vgvVpCbr:147,pctCbr:100},{nome:"Dona Brígida II",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"89, 116 e 138m² + Studios",regiao:"Vila Mariana",reuniaoPassagem:"2025-10-24",meeting:"2027-03-17",lancamento:"2027-04-10",status:"Previsto",inicioObra:"2028-02-01",vgvNom:279,vgvNomCbr:279,unidades:284,vgvVpCbr:214,pctCbr:100},{nome:"Calixto da Mota",segmento:"Compactos",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"23, 28 e 38m²",regiao:"Vila Mariana",reuniaoPassagem:"2025-10-13",meeting:"2027-04-17",lancamento:"2027-05-01",status:"Previsto",inicioObra:"2028-03-01",vgvNom:217,vgvNomCbr:217,unidades:638,vgvVpCbr:168,pctCbr:100},{nome:"Cotoxó",segmento:"Compactos",coordenacao:"Artur Dorfman",doninho:"Giulia Oliveira",mix:"24 e 27m²",regiao:"Perdizes",reuniaoPassagem:"2025-12-01",meeting:"2027-05-05",lancamento:"2027-05-22",status:"Previsto",inicioObra:"2028-03-01",vgvNom:210,vgvNomCbr:210,unidades:621,vgvVpCbr:162,pctCbr:100},{nome:"Fritz Martin",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Wericles Albano",mix:"Cond.01: 69,77,88m² | Cond.02: 148m²",regiao:"Santo Amaro",reuniaoPassagem:"2025-12-11",meeting:"2027-06-02",lancamento:"2027-06-27",status:"Previsto",inicioObra:"2028-04-01",vgvNom:342,vgvNomCbr:256.5,unidades:346,vgvVpCbr:198.27,pctCbr:75},{nome:"Vieira de Moraes",segmento:"Padrão",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"48, 78 e 89m² + Studios",regiao:"Campo Belo",reuniaoPassagem:"2026-01-26",meeting:"2027-08-04",lancamento:"2027-08-21",status:"Previsto",inicioObra:"2028-06-01",vgvNom:187,vgvNomCbr:187,unidades:125,vgvVpCbr:142,pctCbr:100},{nome:"Apeninos III",segmento:"Padrão",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"20, 26 e 36m²",regiao:"Aclimação",reuniaoPassagem:"2026-01-09",meeting:"2027-08-25",lancamento:"2027-09-18",status:"Previsto",inicioObra:"2028-07-01",vgvNom:232,vgvNomCbr:174,unidades:597,vgvVpCbr:131.25,pctCbr:75},{nome:"Rua da Paz",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Akemi Yoshizane",mix:"45,55,60,69,76 e 84m² + Studios",regiao:"Chácara S. Antônio",reuniaoPassagem:"2025-08-18",meeting:"2027-09-22",lancamento:"2027-10-16",status:"Previsto",inicioObra:"2028-08-01",vgvNom:282,vgvNomCbr:282,unidades:518,vgvVpCbr:215,pctCbr:100},{nome:"Santo Arcádio",segmento:"Padrão",coordenacao:"Denis Pimentel",doninho:"Denis Pimentel",mix:"73, 84, 120 e 142m²",regiao:"Brooklin",reuniaoPassagem:"2026-05-08",meeting:"2027-10-27",lancamento:"2027-11-20",status:"Previsto",inicioObra:"2028-09-01",vgvNom:362,vgvNomCbr:362,unidades:224,vgvVpCbr:276,pctCbr:100},{nome:"Dona Inácia Uchôa II",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Wericles Albano",mix:"89, 120 e 140m² + Studios",regiao:"Vila Mariana",reuniaoPassagem:"2026-04-28",meeting:"2028-01-26",lancamento:"2028-02-19",status:"Previsto",inicioObra:"2028-12-01",vgvNom:227,vgvNomCbr:170.25,unidades:169,vgvVpCbr:130.5,pctCbr:75},{nome:"Ministro Ferreira Alves",segmento:"Padrão",coordenacao:"Artur Dorfman",doninho:"Wericles Albano",mix:"49, 62, 77 e 87m²",regiao:"Perdizes",reuniaoPassagem:"2025-10-07",meeting:"2028-02-23",lancamento:"2028-03-18",status:"Previsto",inicioObra:"2029-01-01",vgvNom:238,vgvNomCbr:174.11,unidades:319,vgvVpCbr:133.87,pctCbr:75},{nome:"José de Carvalho",segmento:"Em contratação",coordenacao:"",doninho:"",mix:"24, 27 e 27m²",regiao:"Chácara S. Antônio",reuniaoPassagem:"2026-06-01",meeting:"2028-03-22",lancamento:"2028-04-15",status:"Em contratação",inicioObra:"2029-02-01",vgvNom:235,vgvNomCbr:235,unidades:760,vgvVpCbr:183,pctCbr:100},{nome:"Padre Raposo II",segmento:"Em contratação",coordenacao:"",doninho:"",mix:"73, 89 e 125m²",regiao:"Mooca",reuniaoPassagem:"2026-06-01",meeting:"2028-04-19",lancamento:"2028-05-13",status:"Em contratação",inicioObra:"2029-03-01",vgvNom:196,vgvNomCbr:196,unidades:194,vgvVpCbr:150,pctCbr:100},{nome:"Caio Prado",segmento:"Em contratação",coordenacao:"",doninho:"",mix:"46, 60, 70 e 80m² + Studios",regiao:"Consolação",reuniaoPassagem:"2026-06-01",meeting:"2028-05-17",lancamento:"2028-06-10",status:"Em contratação",inicioObra:"2029-04-01",vgvNom:429,vgvNomCbr:429,unidades:599,vgvVpCbr:324,pctCbr:100},{nome:"Luis Gois",segmento:"Em contratação",coordenacao:"",doninho:"",mix:"46, 59, 69, 79 e 90m²",regiao:"Vila Clementino",reuniaoPassagem:"2026-06-01",meeting:"2028-06-14",lancamento:"2028-07-08",status:"Em contratação",inicioObra:"2029-05-01",vgvNom:245,vgvNomCbr:245,unidades:247,vgvVpCbr:191,pctCbr:100},{nome:"Jesuíno Maciel",segmento:"Em contratação",coordenacao:"",doninho:"",mix:"48, 63, 70 e 87m²",regiao:"Campo Belo",reuniaoPassagem:"2026-06-01",meeting:"2028-08-02",lancamento:"2028-08-26",status:"Em contratação",inicioObra:"2029-06-01",vgvNom:206,vgvNomCbr:154.5,unidades:231,vgvVpCbr:119.25,pctCbr:75},{nome:"Padre Raposo III",segmento:"Em contratação",coordenacao:"",doninho:"",mix:"155m²",regiao:"Mooca",reuniaoPassagem:"2026-06-01",meeting:"2028-08-30",lancamento:"2028-09-23",status:"Em contratação",inicioObra:"2029-07-01",vgvNom:192,vgvNomCbr:192,unidades:135,vgvVpCbr:147,pctCbr:100}];
+
+// ═══════════════════════════════════════════════════
+//  INIT — carrega Firebase e inicia listeners
+// ═══════════════════════════════════════════════════
+(function init(){
+  loadFromFirebase(function(){
+    sortByMeeting(appData);
+    filteredData = appData.slice();
+    updateKPIs();
+    renderTable();
+    renderHistoryList();
+    renderGantt();
+    // inicia listeners de tempo real APÓS carga inicial
+    startMainListener();
+    startStatusListener();
+  });
+})();
+</script>
+</body>
+</html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    
