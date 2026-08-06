@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Painel de Gestão — Landbank Living</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -20,6 +21,43 @@
 html{font-size:15px}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 body.sim-active{background:#F5F5F5}
+
+/* ── TELA DE CARREGAMENTO (enquanto verifica auth) ── */
+#authGate{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:99999;gap:18px;
+}
+#authGate svg{height:44px;width:auto;opacity:.85}
+#authGate .gate-spinner{
+  width:32px;height:32px;border:3px solid var(--border);
+  border-top-color:var(--gold);border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+#authGate .gate-txt{font-size:.82rem;color:var(--text-soft);letter-spacing:.04em}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── CHIP DO USUÁRIO LOGADO ── */
+.user-chip{
+  display:flex;align-items:center;gap:7px;
+  padding:4px 10px 4px 8px;border-radius:20px;
+  background:#F0EBE0;border:1px solid var(--border);
+  font-size:.76rem;color:var(--text-mid);white-space:nowrap;max-width:200px;
+}
+.user-chip-avatar{
+  width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold-dark),var(--gold));
+  color:#fff;font-size:.68rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.user-chip-email{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-logout{
+  background:transparent;border:1.5px solid var(--border);
+  color:var(--text-soft);padding:5px 11px;border-radius:7px;
+  font-size:.76rem;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;
+}
+.btn-logout:hover{border-color:#B04040;color:#B04040;background:#FDECEA}
+
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(44,42,38,.72);z-index:9999;align-items:center;justify-content:center}
 .modal-overlay.active{display:flex}
 .modal-box{background:var(--surface);border-radius:var(--radius);padding:34px 38px;width:360px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.28);text-align:center;position:relative}
@@ -300,10 +338,32 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════════════════════════
+     TELA DE CARREGAMENTO — visível enquanto Firebase verifica
+     se o usuário está logado. Some automaticamente.
+     ══════════════════════════════════════════════════════════ -->
+<div id="authGate">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060.546 365.977">
+    <defs><style>.cls-1{fill:#c1a785}</style></defs>
+    <g><g><g>
+      <path class="cls-1" d="M295.421,114.597v110.803c0,6.045,4.9,10.945,10.945,10.945h78.322v15.035h-63.84c-23.359,0-42.295-18.936-42.295-42.295v-94.487h16.868Z"/>
+      <path class="cls-1" d="M435.931,114.597h16.868v136.782h-16.868V114.597Z"/>
+      <path class="cls-1" d="M563.333,251.379h0c-5.358,0-10.162-3.299-12.086-8.3l-53.567-128.483h17.969l48.142,115.147,47.776-115.147h17.419l-53.567,128.483c-1.924,5-6.728,8.3-12.086,8.3Z"/>
+      <path class="cls-1" d="M673.866,114.597h16.868v136.782h-16.868V114.597Z"/>
+      <path class="cls-1" d="M761.652,136.075v115.305h-16.868v-124.703c0-6.671,5.408-12.08,12.08-12.08h0c3.612,0,7.035,1.617,9.33,4.407l87.441,106.327v-110.734h16.868v125.634c0,6.157-4.991,11.148-11.148,11.148h0c-3.384,0-6.586-1.537-8.701-4.179l-89.001-111.126Z"/>
+      <path class="cls-1" d="M941.87,131.622c-13.963,13.606-21.652,31.784-21.652,51.183s7.689,37.757,21.652,51.435c14.015,13.729,32.804,21.289,52.906,21.289,39.538,0,65.77-32.442,65.77-53.9v-2.79c0-12.464-10.104-22.567-22.567-22.567h-41.603v14.083l50.534-.184.005.246c.24,12.684-4.665,24.803-13.812,34.125-10.03,10.223-24,16.086-38.326,16.086-15.396,0-29.964-6.155-41.02-17.332-10.954-11.074-16.987-25.52-16.987-40.674,0-31.045,26.563-57.273,58.007-57.273,14.722,0,28.04,5.149,39.591,15.307l11.021-11.378c-13.213-11.969-31.645-18.83-50.612-18.83-20.104,0-38.894,7.52-52.906,21.175Z"/>
+    </g>
+      <path class="cls-1" d="M8.349,96.363c-5.346,5.346-8.349,12.597-8.349,20.157v104.095c0,26.24,21.272,47.511,47.511,47.511h57.349l-.149-268.126L8.349,96.363ZM104.861,268.126l.044,78.818c.009,16.874,20.367,25.368,32.366,13.504l93.377-92.322h-125.787Z"/>
+    </g></g>
+  </svg>
+  <div class="gate-spinner"></div>
+  <div class="gate-txt">Verificando acesso…</div>
+</div>
+
 <div class="tooltip" id="tooltip"></div>
 <input type="file" id="importFileInput" accept=".json" onchange="handleImportFile(event)"/>
 <div class="sim-banner" id="simBanner">🔬 MODO SIMULAÇÃO ATIVO — As alterações não serão salvas automaticamente</div>
-
 <div class="modal-overlay" id="dateModal">
 <div class="date-modal-box">
 <h3 id="dateModalTitle">📅 Editar Data</h3>
@@ -316,25 +376,21 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 <button class="modal-close-btn" id="dateModalClose" style="top:10px;right:12px">×</button>
 </div>
 </div>
-
 <div class="modal-overlay" id="confirmDeleteModal">
 <div class="confirm-box"><div class="confirm-icon">🗑️</div><h3 class="danger">Excluir projeto?</h3>
 <p>Você está prestes a excluir<br><strong id="confirmDeleteNome"></strong><br><br>Essa ação será registrada no histórico e pode ser desfeita pela restauração de versão.</p>
 <div class="confirm-actions"><button class="confirm-btn-cancel" onclick="closeModal('confirmDeleteModal')">Cancelar</button><button class="confirm-btn-delete" id="confirmDeleteBtn">Sim, excluir</button></div></div>
 </div>
-
 <div class="modal-overlay" id="confirmRestoreModal">
 <div class="confirm-box"><div class="confirm-icon">↩️</div><h3 class="warning">Restaurar esta versão?</h3>
 <p>Você está prestes a restaurar:<br><strong id="confirmRestoreNome"></strong><br><br>Os dados atuais serão substituídos pelos dados desta versão.</p>
 <div class="confirm-actions"><button class="confirm-btn-cancel" onclick="closeModal('confirmRestoreModal')">Cancelar</button><button class="confirm-btn-restore" id="confirmRestoreBtn">↩ Sim, restaurar</button></div></div>
 </div>
-
 <div class="modal-overlay" id="simExitModal">
 <div class="confirm-box"><div class="confirm-icon">🔬</div><h3 class="sim">Sair da Simulação</h3>
 <p>O que deseja fazer com as alterações desta simulação?</p>
 <div class="confirm-actions"><button class="confirm-btn-sim" id="simApplyBtn">✅ Substituir versão atual</button><button class="confirm-btn-delete" id="simDiscardBtn">🗑 Descartar e sair</button><button class="confirm-btn-cancel" onclick="closeModal('simExitModal')">Voltar à simulação</button></div></div>
 </div>
-
 <div class="modal-overlay" id="authModal">
 <div class="modal-box">
 <button class="modal-close-btn" onclick="closeModal('authModal')">×</button>
@@ -344,7 +400,6 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 <button class="modal-btn" onclick="checkAuth()">Entrar no modo edição</button>
 <div class="modal-err" id="authErr">Senha incorreta. Tente novamente.</div>
 </div></div>
-
 <div class="modal-overlay" id="simAuthModal">
 <div class="modal-box">
 <button class="modal-close-btn" onclick="closeModal('simAuthModal')">×</button>
@@ -354,7 +409,6 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 <button class="modal-btn" style="background:#1A1A1A" onclick="checkSimAuth()">Entrar no modo simulação</button>
 <div class="modal-err" id="simErr">Senha incorreta. Tente novamente.</div>
 </div></div>
-
 <div class="modal-overlay" id="newProjectModal">
 <div class="modal-box wide">
 <button class="modal-close-btn" onclick="closeModal('newProjectModal')">×</button>
@@ -394,7 +448,6 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 <button class="btn-form primary" onclick="submitNewProject()">✅ Adicionar Projeto</button>
 </div>
 </div></div>
-
 <div class="modal-overlay" id="editProjectModal">
 <div class="modal-box wide">
 <button class="modal-close-btn" onclick="closeModal('editProjectModal')">×</button>
@@ -434,7 +487,6 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 <button class="btn-form primary" onclick="submitEditProject()">💾 Salvar Alterações</button>
 </div>
 </div></div>
-
 <div class="history-panel" id="historyPanel">
 <div class="history-head"><span>📋 Histórico de Versões</span><button class="history-close" onclick="toggleHistory()">×</button></div>
 <div class="history-list" id="historyList"></div>
@@ -444,7 +496,6 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 <button class="btn btn-import btn-import-full" onclick="triggerImport()">⬆ Importar Backup (.json)</button>
 </div>
 </div>
-
 <header>
 <div class="logo-area">
 <svg style="height:30px;width:auto;display:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060.546 365.977"><defs><style>.cls-1{fill:#c1a785;}</style></defs><g><g><g><path class="cls-1" d="M295.421,114.597v110.803c0,6.045,4.9,10.945,10.945,10.945h78.322v15.035h-63.84c-23.359,0-42.295-18.936-42.295-42.295v-94.487h16.868Z"/><path class="cls-1" d="M435.931,114.597h16.868v136.782h-16.868V114.597Z"/><path class="cls-1" d="M563.333,251.379h0c-5.358,0-10.162-3.299-12.086-8.3l-53.567-128.483h17.969l48.142,115.147,47.776-115.147h17.419l-53.567,128.483c-1.924,5-6.728,8.3-12.086,8.3Z"/><path class="cls-1" d="M673.866,114.597h16.868v136.782h-16.868V114.597Z"/><path class="cls-1" d="M761.652,136.075v115.305h-16.868v-124.703c0-6.671,5.408-12.08,12.08-12.08h0c3.612,0,7.035,1.617,9.33,4.407l87.441,106.327v-110.734h16.868v125.634c0,6.157-4.991,11.148-11.148,11.148h0c-3.384,0-6.586-1.537-8.701-4.179l-89.001-111.126Z"/><path class="cls-1" d="M941.87,131.622c-13.963,13.606-21.652,31.784-21.652,51.183s7.689,37.757,21.652,51.435c14.015,13.729,32.804,21.289,52.906,21.289,39.538,0,65.77-32.442,65.77-53.9v-2.79c0-12.464-10.104-22.567-22.567-22.567h-41.603v14.083l50.534-.184.005.246c.24,12.684-4.665,24.803-13.812,34.125-10.03,10.223-24,16.086-38.326,16.086-15.396,0-29.964-6.155-41.02-17.332-10.954-11.074-16.987-25.52-16.987-40.674,0-31.045,26.563-57.273,58.007-57.273,14.722,0,28.04,5.149,39.591,15.307l11.021-11.378c-13.213-11.969-31.645-18.83-50.612-18.83-20.104,0-38.894,7.52-52.906,21.175Z"/></g><path class="cls-1" d="M8.349,96.363c-5.346,5.346-8.349,12.597-8.349,20.157v104.095c0,26.24,21.272,47.511,47.511,47.511h57.349l-.149-268.126L8.349,96.363ZM104.861,268.126l.044,78.818c.009,16.874,20.367,25.368,32.366,13.504l93.377-92.322h-125.787Z"/></g></g></svg>
@@ -454,6 +505,14 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 <div class="sync-indicator" id="syncIndicator"><span class="sync-dot" id="syncDot"></span><span id="syncText">Conectando…</span></div>
 <span class="edit-badge" id="editBadge"><span class="badge-dot"></span> MODO EDIÇÃO ATIVO</span>
 <span class="sim-badge" id="simBadge"><span class="badge-dot-sim"></span> 🔬 SIMULAÇÃO ATIVA</span>
+
+<!-- ── CHIP DO USUÁRIO + LOGOUT (preenchido pelo JS) ── -->
+<div class="user-chip" id="userChip" style="display:none">
+  <div class="user-chip-avatar" id="userAvatar">?</div>
+  <span class="user-chip-email" id="userEmail"></span>
+</div>
+<button class="btn-logout" id="btnLogout" style="display:none" onclick="fazerLogout()">Sair</button>
+
 <button class="btn btn-outline" id="versionsBtn" style="display:none" onclick="toggleHistory()">📋 Versões</button>
 <button class="btn btn-outline" id="editBtn" onclick="requestEdit()">✏️ Editar</button>
 <button class="btn btn-sim-outline" id="simBtn" onclick="requestSim()">🔬 Simular</button>
@@ -463,7 +522,6 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 <button class="btn btn-sim" id="exitSimBtn" style="display:none" onclick="requestExitSim()">🔬 Sair da Simulação</button>
 </div>
 </header>
-
 <main>
 <div class="section-title">Filtros</div>
 <div class="filters">
@@ -475,7 +533,6 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 <div class="filter-group"><label class="fg-label">Buscar</label><input type="text" id="fSearch" placeholder="Nome do terreno…" oninput="applyFilters()" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:.84rem;min-width:145px;outline:none;background:#fff"/></div>
 <button class="filter-reset" onclick="resetFilters()">↺ Limpar tudo</button>
 </div>
-
 <div class="section-title">Indicadores</div>
 <div class="gantt-sel-note" id="ganttSelNote">🎯 <span id="ganttSelText"></span><button onclick="clearGanttSel()" style="margin-left:auto;background:none;border:1px solid #3A7AB0;color:#2A5F8C;border-radius:5px;padding:2px 8px;cursor:pointer;font-size:.74rem">✕ Limpar seleção</button></div>
 <div class="kpi-grid">
@@ -487,7 +544,6 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 <div class="kpi-card"><div class="kpi-label">Tempo Médio p/ Lançamento</div><div class="kpi-value" id="kpiTempo">—</div><div class="kpi-sub">meses (passagem → lançamento)</div></div>
 </div>
 <div class="kpi-note">⚠️ <strong>Atenção:</strong> indicadores consideram apenas <strong>Lançado</strong> e <strong>Previsto</strong>. Coringa e Em contratação são excluídos.</div>
-
 <div class="section-title">Linha do Tempo — Meeting → Lançamento</div>
 <div class="gantt-wrapper" id="ganttWrapper">
 <div class="gantt-header-bar">
@@ -507,7 +563,6 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 </div>
 <div class="gantt-container" id="ganttContainer"></div>
 </div>
-
 <div class="section-title">Tabela de Projetos</div>
 <div class="table-wrapper">
 <div class="table-header-bar">
@@ -555,24 +610,70 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
 </div>
 </main>
 <div class="save-toast" id="saveToast"></div>
-
 <script>
+// ══════════════════════════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════════════════════════
 var firebaseConfig={apiKey:"AIzaSyAOQ4jWpC4kE8efXU5D1KdvXg_De0U8WQ4",authDomain:"living-landbank.firebaseapp.com",projectId:"living-landbank",storageBucket:"living-landbank.firebasestorage.app",messagingSenderId:"572852178816",appId:"1:572852178816:web:04a3a90b2435b94450fb65"};
 firebase.initializeApp(firebaseConfig);
+var auth=firebase.auth();
 var db=firebase.firestore();
 
 // ══════════════════════════════════════════════════════════
-// ARQUITETURA DE STORAGE — 3 documentos separados:
-// landbank/main   → appData apenas (sem versions)
-// landbank/status → statusData
-// landbank/versions/{id} → cada versão como documento próprio
-// Limite por doc: 1MB. Versões ficam em subcoleção separada.
-// Máximo de versões mantidas: 20 (auto) + 10 (manual) = 30
+// GUARDA DE AUTENTICAÇÃO
+// Fica na frente de TUDO. O painel só inicializa após
+// confirmar que há um usuário logado no Firebase Auth.
+// ══════════════════════════════════════════════════════════
+var _painelInicializado=false;
+
+auth.onAuthStateChanged(function(user){
+  var gate=document.getElementById('authGate');
+  if(!user){
+    // Não logado → redireciona para login
+    window.location.href='login.html';
+    return;
+  }
+  // Logado → esconde o gate e mostra o painel
+  gate.style.display='none';
+
+  // Preenche o chip do usuário no header
+  var email=user.email||'';
+  var inicial=email.charAt(0).toUpperCase();
+  document.getElementById('userAvatar').textContent=inicial;
+  document.getElementById('userEmail').textContent=email;
+  document.getElementById('userChip').style.display='flex';
+  document.getElementById('btnLogout').style.display='inline-flex';
+
+  // Inicializa o painel apenas uma vez
+  if(!_painelInicializado){
+    _painelInicializado=true;
+    initPainel();
+  }
+});
+
+function fazerLogout(){
+  auth.signOut().then(function(){
+    window.location.href='login.html';
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// INICIALIZAÇÃO DO PAINEL (chamada apenas após auth OK)
+// ══════════════════════════════════════════════════════════
+function initPainel(){
+  loadFromFirebase(function(){
+    sortByMeeting(appData);
+    filteredData=appData.slice();
+    updateKPIs();renderTable();renderHistoryList();renderGantt();
+    startMainListener();startStatusListener();
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// RESTO DO CÓDIGO ORIGINAL — sem nenhuma alteração
 // ══════════════════════════════════════════════════════════
 var MAX_AUTO_VERSIONS=15,MAX_MANUAL_VERSIONS=10;
-
 function setSyncState(s,m){var d=document.getElementById('syncDot'),t=document.getElementById('syncText');d.className='sync-dot'+(s==='syncing'?' syncing':s==='error'?' error':'');t.textContent=m;}
-
 var EDIT_PASSWORD="living2025",SIM_PASSWORD="simula2025";
 var KPI_STATUSES=["Lançado","Previsto"],LBL_W=220,TABLE_COLSPAN=19;
 var SEG_OPTS=["Padrão","Full","Compactos","ABC"];
@@ -585,12 +686,9 @@ var versions=[],editedRows=new Set(),simEditedRows=new Set();
 var ganttSelMode=false,ganttSelected=new Set(),ganttColW=60;
 var _dm={idx:null,field:null,tdEl:null},_pendingDeleteNome=null,_pendingRestoreId=null,_editIdx=null;
 var _fbListenerMain=null,_fbListenerStatus=null,_editingCell=false,_listenerPaused=false;
-
 function pauseListener(){_listenerPaused=true;}
 function resumeListener(delay){setTimeout(function(){_listenerPaused=false;},delay||3000);}
 function isListenerBlocked(){return _listenerPaused||_editingCell;}
-
-// ── PERSIST: salva APENAS appData no doc main (sem versions) ──
 function persistMain(){
   setSyncState('syncing','Salvando…');
   pauseListener();
@@ -606,23 +704,18 @@ function persistMain(){
     console.error(e);
   });
 }
-
 function persistStatus(){
   pauseListener();
   db.collection('landbank').doc('status').set(statusData)
   .then(function(){resumeListener(3000);})
   .catch(function(e){resumeListener(1000);console.error(e);});
 }
-
-// ── VERSÕES: cada versão é um documento separado na coleção versions ──
 function persistVersion(v){
   return db.collection('landbank').doc('versions').collection('items').doc(String(v.id)).set(v);
 }
 function deleteVersion(id){
   return db.collection('landbank').doc('versions').collection('items').doc(String(id)).delete();
 }
-
-// Limpa versões antigas mantendo apenas os limites definidos
 function pruneVersions(){
   var autos=versions.filter(function(v){return v.auto;});
   var manuals=versions.filter(function(v){return!v.auto;});
@@ -634,7 +727,6 @@ function pruneVersions(){
     deleteVersion(v.id).catch(function(e){console.error('Erro ao deletar versão',e);});
   });
 }
-
 function loadVersions(cb){
   db.collection('landbank').doc('versions').collection('items')
   .orderBy('date','desc').limit(30).get()
@@ -644,7 +736,6 @@ function loadVersions(cb){
     if(cb)cb();
   }).catch(function(e){console.error('Erro ao carregar versões',e);if(cb)cb();});
 }
-
 function startMainListener(){
   if(_fbListenerMain)_fbListenerMain();
   _fbListenerMain=db.collection('landbank').doc('main').onSnapshot(function(doc){
@@ -660,7 +751,6 @@ function startMainListener(){
     }
   },function(err){setSyncState('error','Sem conexão');console.error(err);});
 }
-
 function startStatusListener(){
   if(_fbListenerStatus)_fbListenerStatus();
   _fbListenerStatus=db.collection('landbank').doc('status').onSnapshot(function(doc){
@@ -675,7 +765,6 @@ function startStatusListener(){
     }
   },function(err){console.error(err);});
 }
-
 function loadFromFirebase(cb){
   setSyncState('syncing','Carregando…');
   Promise.all([
@@ -685,7 +774,6 @@ function loadFromFirebase(cb){
     var md=res[0],sd=res[1];
     if(md.exists){
       var d=md.data();
-      // compatibilidade: se ainda tiver versions no doc principal, migra
       if(d.versions&&Array.isArray(d.versions)&&d.versions.length>0){
         versions=d.versions;
         migrateVersionsToSubcollection();
@@ -701,15 +789,12 @@ function loadFromFirebase(cb){
         statusData=s;
       }
     }
-    // carrega versões da subcoleção
     loadVersions(function(){
       setSyncState('ok','Sincronizado ✓');
       cb();
     });
   }).catch(function(err){setSyncState('error','Erro de conexão');console.error(err);appData=[];cb();});
 }
-
-// Migração única: move versions do doc main para subcoleção e limpa doc main
 function migrateVersionsToSubcollection(){
   if(!versions||!versions.length)return;
   var batch=db.batch();
@@ -717,13 +802,9 @@ function migrateVersionsToSubcollection(){
     var ref=db.collection('landbank').doc('versions').collection('items').doc(String(v.id));
     batch.set(ref,v);
   });
-  // remove versions do doc main
   batch.update(db.collection('landbank').doc('main'),{versions:firebase.firestore.FieldValue.delete()});
-  batch.commit().then(function(){
-    console.log('Migração de versões concluída.');
-  }).catch(function(e){console.error('Erro na migração:',e);});
+  batch.commit().then(function(){console.log('Migração de versões concluída.');}).catch(function(e){console.error('Erro na migração:',e);});
 }
-
 function migrateData(arr){
   return arr.map(function(r){
     var out=Object.assign({},r);
@@ -735,13 +816,7 @@ function migrateData(arr){
     return out;
   });
 }
-
-function toggleCoringaSection(prefix){
-  var chk=document.getElementById(prefix+'_isCoringa');
-  var dates=document.getElementById(prefix+'_coringaDates');
-  if(chk.checked)dates.classList.add('visible');else dates.classList.remove('visible');
-}
-
+function toggleCoringaSection(prefix){var chk=document.getElementById(prefix+'_isCoringa');var dates=document.getElementById(prefix+'_coringaDates');if(chk.checked)dates.classList.add('visible');else dates.classList.remove('visible');}
 function activeData(){return simMode?simData:appData;}
 function sortByMeeting(arr){arr.sort(function(a,b){var da=a.meeting||'9999-99',db_=b.meeting||'9999-99';return da<db_?-1:da>db_?1:0;});return arr;}
 function closeModal(id){document.getElementById(id).classList.remove('active');}
@@ -761,27 +836,21 @@ function farolHTML(m){if(m==null)return'<span style="color:var(--text-soft);font
 function hasStatusPanel(r){if(!r.lancamento)return false;if(r.status==='Em contratação')return false;return parseInt(r.lancamento.slice(0,4),10)>=2025;}
 function segmentoCell(r,gi){var opts=SEG_OPTS.map(function(o){return'<option'+(r.segmento===o?' selected':'')+'>'+o+'</option>';}).join('');var dis=(editMode||simMode)?'':' disabled';return'<select class="seg-select"'+dis+' onchange="onSelChange('+gi+',\'segmento\',this.value)">'+opts+'</select>';}
 function sanitizeRichText(html){return(html||'').replace(/<(?!\/?(?:b|strong|i|em|u)(?:\s|>))[^>]+>/gi,'').trim();}
-
 (function(){
   document.getElementById('dateModalOk').onclick=function(){applyDateModal(document.getElementById('dateModalInput').value);};
   document.getElementById('dateModalClear').onclick=function(){applyDateModal('');};
   document.getElementById('dateModalClose').onclick=function(){closeModal('dateModal');resumeListener(500);};
   document.getElementById('dateModalInput').onkeydown=function(e){if(e.key==='Enter')applyDateModal(document.getElementById('dateModalInput').value);if(e.key==='Escape'){closeModal('dateModal');resumeListener(500);}};
 })();
-
 function openDateModal(idx,field,tdEl){if(!editMode&&!simMode)return;pauseListener();_dm.idx=idx;_dm.field=field;_dm.tdEl=tdEl;document.getElementById('dateModalTitle').textContent='📅 '+(DATE_LABELS[field]||field)+(simMode?' 🔬':'');document.getElementById('dateModalSub').textContent='Projeto: '+activeData()[idx].nome;document.getElementById('dateModalInput').value=activeData()[idx][field]||'';document.getElementById('dateModal').classList.add('active');setTimeout(function(){document.getElementById('dateModalInput').focus();},150);}
 function applyDateModal(val){var idx=_dm.idx,field=_dm.field,tdEl=_dm.tdEl;closeModal('dateModal');if(idx===null||!field){resumeListener(500);return;}activeData()[idx][field]=val;if(simMode)simEditedRows.add(idx);else editedRows.add(idx);if(tdEl)tdEl.textContent=val?fmtDate(val):'—';var tr=document.querySelector('tr[data-idx="'+idx+'"]');if(tr){tr.classList.remove('row-edited','row-sim-edited');tr.classList.add(simMode?'row-sim-edited':'row-edited');}if(field==='reuniaoPassagem'||field==='lancamento'){if(tr){var mTd=tr.querySelector('.td-meses');if(mTd)mTd.innerHTML=farolHTML(diffMonths(activeData()[idx].reuniaoPassagem,activeData()[idx].lancamento));}updateKPIs();}if(field==='meeting'){sortByMeeting(activeData());applyFilters();if(!simMode)persistMain();return;}if(field==='lancamento')renderGantt();if(!simMode)persistMain();}
-
 document.getElementById('confirmDeleteBtn').onclick=function(){if(!_pendingDeleteNome)return;var n=_pendingDeleteNome;_pendingDeleteNome=null;closeModal('confirmDeleteModal');executeDelete(n);};
 function requestDelete(n){if(!editMode&&!simMode)return;_pendingDeleteNome=n;document.getElementById('confirmDeleteNome').textContent='"'+n+'"';document.getElementById('confirmDeleteModal').classList.add('active');}
 function executeDelete(n){var arr=activeData();var i=arr.findIndex(function(r){return r.nome===n;});if(i===-1)return;arr.splice(i,1);if(!simMode&&statusData[n])delete statusData[n];if(!simMode){persistStatus();autoSaveVersion('🗑 Projeto excluído: '+n);}applyFilters();showToast('🗑 "'+n+'" removido.',simMode);}
-
 document.getElementById('confirmRestoreBtn').onclick=function(){if(!_pendingRestoreId)return;var id=_pendingRestoreId;_pendingRestoreId=null;closeModal('confirmRestoreModal');executeRestore(id);};
 function requestRestore(id){var v=versions.find(function(x){return x.id===id;});if(!v||!v.data||!v.data.length){showToast('⚠️ Versão sem dados.');return;}_pendingRestoreId=id;document.getElementById('confirmRestoreNome').textContent='"'+v.label+'"';document.getElementById('confirmRestoreModal').classList.add('active');}
 function executeRestore(id){var v=versions.find(function(x){return x.id===id;});if(!v||!v.data||!v.data.length){showToast('⚠️ Versão sem dados.');return;}appData=migrateData(JSON.parse(JSON.stringify(v.data)));if(v.statusData)statusData=JSON.parse(JSON.stringify(v.statusData));editedRows.clear();sortByMeeting(appData);collapseAllStatus();persistMain();applyFilters();document.getElementById('historyPanel').classList.remove('open');showToast('↩ "'+v.label+'" restaurada!');}
-
 function openEditProjectModal(idx){if(!editMode&&!simMode)return;pauseListener();_editIdx=idx;var r=activeData()[idx];document.getElementById('ep_nome').value=r.nome||'';document.getElementById('ep_segmento').value=r.segmento||'';document.getElementById('ep_status').value=(r.status==='Coringa'?'Previsto':r.status)||'';document.getElementById('ep_coordenacao').value=r.coordenacao||'';document.getElementById('ep_doninho').value=r.doninho||'';document.getElementById('ep_regiao').value=r.regiao||'';document.getElementById('ep_mix').value=r.mix||'';document.getElementById('ep_reuniaoPassagem').value=r.reuniaoPassagem||'';document.getElementById('ep_meeting').value=r.meeting||'';document.getElementById('ep_lancamento').value=r.lancamento||'';document.getElementById('ep_inicioObra').value=r.inicioObra||'';document.getElementById('ep_unidades').value=r.unidades!=null?r.unidades:'';document.getElementById('ep_pctCbr').value=r.pctCbr!=null?String(r.pctCbr):'100';document.getElementById('ep_vgvNom').value=r.vgvNom!=null?r.vgvNom:'';document.getElementById('ep_vgvNomCbr').value=r.vgvNomCbr!=null?r.vgvNomCbr:'';document.getElementById('ep_vgvVpCbr').value=r.vgvVpCbr!=null?r.vgvVpCbr:'';var isC=!!r.isCoringa;document.getElementById('ep_isCoringa').checked=isC;document.getElementById('ep_coringaMeeting').value=r.coringaMeeting||'';document.getElementById('ep_coringaLancamento').value=r.coringaLancamento||'';document.getElementById('ep_coringaDates').classList.toggle('visible',isC);document.getElementById('epErr').style.display='none';document.getElementById('editProjectModal').classList.add('active');setTimeout(function(){document.getElementById('ep_nome').focus();},120);}
-
 function submitEditProject(){
   var idx=_editIdx;if(idx===null||idx===undefined)return;
   var nome=document.getElementById('ep_nome').value.trim(),segmento=document.getElementById('ep_segmento').value,status=document.getElementById('ep_status').value,errEl=document.getElementById('epErr');
@@ -814,9 +883,7 @@ function submitEditProject(){
   if(!simMode)autoSaveVersion('✏️ Projeto editado: '+nome);
   showToast('✅ "'+nome+'" atualizado!',simMode);
 }
-
 function openNewProjectModal(){pauseListener();['np_nome','np_regiao','np_mix','np_reuniaoPassagem','np_meeting','np_lancamento','np_inicioObra','np_unidades','np_vgvNom','np_vgvNomCbr','np_vgvVpCbr','np_coringaMeeting','np_coringaLancamento'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('np_segmento').value='';document.getElementById('np_status').value='';document.getElementById('np_coordenacao').value='';document.getElementById('np_doninho').value='';document.getElementById('np_pctCbr').value='100';document.getElementById('np_isCoringa').checked=false;document.getElementById('np_coringaDates').classList.remove('visible');document.getElementById('npErr').style.display='none';document.getElementById('newProjectModal').classList.add('active');setTimeout(function(){document.getElementById('np_nome').focus();},120);}
-
 function submitNewProject(){
   var nome=document.getElementById('np_nome').value.trim(),segmento=document.getElementById('np_segmento').value,status=document.getElementById('np_status').value,errEl=document.getElementById('npErr');
   if(!nome){errEl.textContent='⚠️ Nome obrigatório.';errEl.style.display='block';return;}
@@ -830,7 +897,6 @@ function submitNewProject(){
   if(!simMode)autoSaveVersion('➕ Projeto adicionado: '+nome);
   showToast('✅ "'+nome+'" adicionado!',simMode);
 }
-
 function initStatusData(nome){if(!statusData[nome]){statusData[nome]={open:false,rows:STATUS_TOPICS.map(function(t){return{topic:t,farol:'neutro',texto:'',hidden:false};})};}}
 function buildStatusPanel(nome,colSpan){initStatusData(nome);var sd=statusData[nome],sid=safeId(nome);var hc=sd.rows.filter(function(r){return r.hidden;}).length;var html='<tr class="status-panel-row'+(sd.open?' open':'')+'" id="spr_'+sid+'"><td class="status-panel-cell" colspan="'+colSpan+'"><div class="status-panel-inner">';html+='<div class="sp-header"><span class="sp-title">📋 Status — '+nome+'</span><div class="sp-actions">';if(hc>0)html+='<button class="sp-btn" onclick="showAllRows(\''+sid+'\')">👁 Reexibir todas ('+hc+' ocultas)</button>';html+='<button class="sp-btn danger" onclick="toggleStatusPanel(\''+sid+'\',\''+escQ(nome)+'\')">✕ Fechar</button></div></div>';if(!editMode&&!simMode)html+='<div style="font-size:.72rem;color:var(--text-soft);background:#F7F5F1;border:1px solid var(--border);border-radius:5px;padding:5px 10px;margin-bottom:8px">🔒 Modo leitura — ative Edição ou Simulação para alterar.</div>';html+='<table class="sp-table"><thead><tr><th class="sp-col-assunto">Assunto</th><th class="sp-col-farol">Farol</th><th>Status / Observações</th><th style="width:70px"></th></tr></thead><tbody>';sd.rows.forEach(function(row,ri){var hcls=row.hidden?' sp-hidden':'';html+='<tr class="sp-row'+hcls+'" id="sprow_'+sid+'_'+ri+'"><td class="sp-col-assunto">'+row.topic+'</td><td class="sp-col-farol">';if(editMode||simMode)html+='<div class="farol-cycle-btn editable" data-farol="'+row.farol+'" onclick="cycleFarol(\''+sid+'\','+ri+')"></div>';else html+='<div class="farol-cycle-btn locked" data-farol="'+row.farol+'"></div>';html+='</td><td>';if(editMode||simMode)html+='<div class="sp-status-cell" contenteditable="true" onfocus="onStatusFocus()" onblur="saveStatusText(\''+sid+'\','+ri+',this)">'+(row.texto||'')+'</div>';else html+='<div class="sp-status-cell" contenteditable="false">'+(row.texto||'')+'</div>';html+='</td><td style="text-align:center">';if(editMode||simMode)html+='<button class="sp-hide-btn" onclick="hideRow(\''+sid+'\','+ri+')">Ocultar</button>';html+='</td></tr>';});html+='</tbody></table></div></td></tr>';return html;}
 function onStatusFocus(){_editingCell=true;pauseListener();}
@@ -843,12 +909,10 @@ function refreshShowAllBtn(sid,nome){var panelRow=document.getElementById('spr_'
 function findNomeBySid(sid){var f=null;Object.keys(statusData).forEach(function(n){if(safeId(n)===sid)f=n;});return f;}
 function refreshOpenPanels(){Object.keys(statusData).forEach(function(nome){if(statusData[nome].open){var sid=safeId(nome);var panelRow=document.getElementById('spr_'+sid);if(panelRow){var cell=panelRow.querySelector('.status-panel-cell');var cs=cell?cell.getAttribute('colspan'):TABLE_COLSPAN;var tmp=document.createElement('tbody');tmp.innerHTML=buildStatusPanel(nome,cs);var newRow=tmp.querySelector('.status-panel-row');panelRow.parentNode.replaceChild(newRow,panelRow);}}});}
 function collapseAllStatus(){Object.keys(statusData).forEach(function(nome){if(statusData[nome]&&typeof statusData[nome]==='object')statusData[nome].open=false;});document.querySelectorAll('.status-panel-row.open').forEach(function(r){r.classList.remove('open');});document.querySelectorAll('.btn-expand-status.open').forEach(function(b){b.classList.remove('open');});showToast('↑ Todos os painéis de status recolhidos.');}
-
 function requestEdit(){document.getElementById('authModal').classList.add('active');document.getElementById('authPassword').value='';document.getElementById('authErr').style.display='none';setTimeout(function(){document.getElementById('authPassword').focus();},100);}
 function checkAuth(){if(document.getElementById('authPassword').value===EDIT_PASSWORD){closeModal('authModal');enterEdit();}else{document.getElementById('authErr').style.display='block';document.getElementById('authPassword').value='';document.getElementById('authPassword').focus();}}
 function enterEdit(){editMode=true;document.getElementById('editBadge').classList.add('active');document.getElementById('editBtn').style.display='none';document.getElementById('simBtn').style.display='none';document.getElementById('versionsBtn').style.display='inline-flex';document.getElementById('exitEditBtn').style.display='inline-flex';document.getElementById('saveBtn').style.display='inline-flex';document.getElementById('btnAddProject').style.display='inline-block';document.getElementById('editToolbar').classList.add('visible');document.getElementById('mainTable').classList.add('edit-mode');refreshOpenPanels();renderTable();showToast('✏️ Modo edição ativado');}
 function exitEdit(){editMode=false;editedRows.clear();_editingCell=false;closeModal('dateModal');closeModal('editProjectModal');document.getElementById('editBadge').classList.remove('active');document.getElementById('editBtn').style.display='inline-flex';document.getElementById('simBtn').style.display='inline-flex';document.getElementById('versionsBtn').style.display='none';document.getElementById('exitEditBtn').style.display='none';document.getElementById('saveBtn').style.display='none';document.getElementById('btnAddProject').style.display='none';document.getElementById('editToolbar').classList.remove('visible');document.getElementById('mainTable').classList.remove('edit-mode');document.getElementById('historyPanel').classList.remove('open');refreshOpenPanels();renderTable();showToast('Modo edição desativado');}
-
 function requestSim(){document.getElementById('simAuthModal').classList.add('active');document.getElementById('simPassword').value='';document.getElementById('simErr').style.display='none';setTimeout(function(){document.getElementById('simPassword').focus();},100);}
 function checkSimAuth(){if(document.getElementById('simPassword').value===SIM_PASSWORD){closeModal('simAuthModal');enterSim();}else{document.getElementById('simErr').style.display='block';document.getElementById('simPassword').value='';document.getElementById('simPassword').focus();}}
 function enterSim(){simData=JSON.parse(JSON.stringify(appData));simEditedRows.clear();simMode=true;document.body.classList.add('sim-active');document.getElementById('simBadge').classList.add('active');document.getElementById('simBanner').classList.add('active');document.getElementById('editBtn').style.display='none';document.getElementById('simBtn').style.display='none';document.getElementById('simApplyHeaderBtn').style.display='inline-flex';document.getElementById('exitSimBtn').style.display='inline-flex';document.getElementById('simToolbar').classList.add('visible');document.getElementById('mainTable').classList.add('edit-mode');document.getElementById('ganttTitle').textContent='📅 Gantt de Lançamentos — 🔬 SIMULAÇÃO';refreshOpenPanels();applyFilters();showToast('🔬 Simulação iniciada — dados originais protegidos',true);}
@@ -857,7 +921,6 @@ function applySimDirect(){appData=JSON.parse(JSON.stringify(simData));sortByMeet
 document.getElementById('simApplyBtn').onclick=function(){closeModal('simExitModal');appData=JSON.parse(JSON.stringify(simData));sortByMeeting(appData);exitSim();autoSaveVersion('🔬 Simulação aplicada');showToast('✅ Simulação aplicada e versão salva!');};
 document.getElementById('simDiscardBtn').onclick=function(){closeModal('simExitModal');exitSim();showToast('🗑 Simulação descartada — dados originais mantidos');};
 function exitSim(){simMode=false;simData=null;simEditedRows.clear();_editingCell=false;document.body.classList.remove('sim-active');document.getElementById('simBadge').classList.remove('active');document.getElementById('simBanner').classList.remove('active');document.getElementById('editBtn').style.display='inline-flex';document.getElementById('simBtn').style.display='inline-flex';document.getElementById('simApplyHeaderBtn').style.display='none';document.getElementById('exitSimBtn').style.display='none';document.getElementById('simToolbar').classList.remove('visible');document.getElementById('mainTable').classList.remove('edit-mode');document.getElementById('ganttTitle').textContent='📅 Gantt de Lançamentos';closeModal('dateModal');refreshOpenPanels();applyFilters();}
-
 var PANELS=['ano','status','coord','doninho','seg'];
 function togglePanel(e,key){e.stopPropagation();var isOpen=document.getElementById('pnl-'+key).classList.contains('open');PANELS.forEach(function(k){document.getElementById('pnl-'+k).classList.remove('open');});if(!isOpen)document.getElementById('pnl-'+key).classList.add('open');}
 document.addEventListener('click',function(e){PANELS.forEach(function(k){var p=document.getElementById('pnl-'+k);if(p&&!p.contains(e.target)&&e.target.id!=='trg-'+k)p.classList.remove('open');});});
@@ -865,18 +928,12 @@ function getChecked(key){return Array.from(document.querySelectorAll('#pnl-'+key
 function filterChange(key){var vals=getChecked(key);var trg=document.getElementById('trg-'+key);if(!vals.length){trg.textContent=key==='coord'?'Todas':'Todos';trg.classList.remove('has-sel');}else{trg.textContent=vals.length===1?vals[0]:vals.length+' selecionados';trg.classList.add('has-sel');}applyFilters();}
 function clearFilter(key){document.querySelectorAll('#pnl-'+key+' input[type=checkbox]').forEach(function(c){c.checked=false;});filterChange(key);}
 function resetFilters(){PANELS.forEach(function(k){clearFilter(k);});document.getElementById('fSearch').value='';applyFilters();}
-
 function applyFilters(){
   var src=activeData();
   var fAno=getChecked('ano'),fSt=getChecked('status'),fCo=getChecked('coord'),fDo=getChecked('doninho'),fSe=getChecked('seg');
   var fQ=document.getElementById('fSearch').value.toLowerCase();
   filteredData=src.filter(function(r){
-    if(fAno.length){
-      var matchAno=false;
-      if(r.lancamento&&fAno.some(function(a){return r.lancamento.startsWith(a);}))matchAno=true;
-      if(!matchAno&&r.isCoringa&&r.coringaLancamento&&fAno.some(function(a){return r.coringaLancamento.startsWith(a);}))matchAno=true;
-      if(!matchAno)return false;
-    }
+    if(fAno.length){var matchAno=false;if(r.lancamento&&fAno.some(function(a){return r.lancamento.startsWith(a);}))matchAno=true;if(!matchAno&&r.isCoringa&&r.coringaLancamento&&fAno.some(function(a){return r.coringaLancamento.startsWith(a);}))matchAno=true;if(!matchAno)return false;}
     if(fSt.length){var eff=r.isCoringa?'Coringa':r.status;if(fSt.indexOf(eff)===-1)return false;}
     if(fCo.length&&fCo.indexOf(r.coordenacao)===-1)return false;
     if(fDo.length&&fDo.indexOf(r.doninho)===-1)return false;
@@ -889,15 +946,12 @@ function applyFilters(){
 }
 function sortTable(key){if(key==='meeting'){sortByMeeting(activeData());sortKey=null;sortDir=1;applyFilters();return;}if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=1;}doSort(key,true);}
 function doSort(key,rerender){filteredData.sort(function(a,b){var va=a[key]!=null?a[key]:'',vb=b[key]!=null?b[key]:'';if(!isNaN(parseFloat(va))&&!isNaN(parseFloat(vb)))return((parseFloat(va)||0)-(parseFloat(vb)||0))*sortDir;return String(va).localeCompare(String(vb),'pt-BR')*sortDir;});if(rerender)renderTable();}
-
 function updateKPIs(){var d=filteredData.filter(function(r){return KPI_STATUSES.indexOf(r.status)!==-1;});if(ganttSelected.size>0){d=d.filter(function(r){return ganttSelected.has(r.nome);});document.getElementById('ganttSelNote').classList.add('visible');document.getElementById('ganttSelText').textContent=ganttSelected.size+' projeto(s) selecionado(s) — indicadores filtrados.';}else document.getElementById('ganttSelNote').classList.remove('visible');document.getElementById('kpiTotal').textContent=fmtNum(d.length);document.getElementById('kpiVgvNom').textContent=fmtCurVGV(d.reduce(function(s,r){return s+(r.vgvNom||0);},0));document.getElementById('kpiVgvCbr').textContent=fmtCurVGV(d.reduce(function(s,r){return s+(r.vgvNomCbr||0);},0));document.getElementById('kpiVgvVp').textContent=fmtCurVGV(d.reduce(function(s,r){return s+(r.vgvVpCbr||0);},0));document.getElementById('kpiUnidades').textContent=fmtNum(d.reduce(function(s,r){return s+(r.unidades||0);},0));var tempos=d.filter(function(r){return r.reuniaoPassagem&&r.lancamento;}).map(function(r){return diffMonths(r.reuniaoPassagem,r.lancamento);});document.getElementById('kpiTempo').textContent=tempos.length?Math.round(tempos.reduce(function(s,v){return s+v;},0)/tempos.length)+'m':'—';}
-
 function ganttZoom(dir){ganttColW=Math.max(20,Math.min(150,ganttColW+dir*12));renderGantt();}
 function ganttScrollToday(){var c=document.getElementById('ganttContainer');var fl=c.querySelector('.gantt-today-line');if(fl)c.scrollLeft=parseFloat(fl.style.left)-200;}
 function toggleGanttSelMode(){ganttSelMode=!ganttSelMode;var btn=document.getElementById('ganttSelModeBtn');btn.classList.toggle('active',ganttSelMode);btn.textContent=ganttSelMode?'✓ Modo seleção ativo':'☐ Selecionar projetos';if(!ganttSelMode){ganttSelected.clear();updateKPIs();renderGantt();}}
 function clearGanttSel(){ganttSelected.clear();updateKPIs();document.querySelectorAll('.gantt-data-row').forEach(function(r){r.classList.remove('g-selected');});}
 function toggleGanttRow(nome){if(!ganttSelMode)return;if(ganttSelected.has(nome))ganttSelected.delete(nome);else ganttSelected.add(nome);updateKPIs();document.querySelectorAll('.gantt-data-row').forEach(function(r){r.classList.toggle('g-selected',ganttSelected.has(r.dataset.nome));});}
-
 function renderGantt(){
   var data=filteredData,container=document.getElementById('ganttContainer');
   if(!data.length){container.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-soft)">Nenhum projeto para exibir.</div>';return;}
@@ -950,7 +1004,6 @@ window.addEventListener('resize',function(){renderGantt();});
 function showTip(e,el){var t=document.getElementById('tooltip');var tipo=el.dataset.tipo==='coringa'?'🃏 Cenário Coringa':'📌 Cenário Principal';t.innerHTML='<strong>'+el.dataset.nome+'</strong>'+tipo+'<br>👤 '+el.dataset.doninho+'<br>📅 Meeting: '+el.dataset.meeting+'<br>🚀 Lançamento: '+el.dataset.lanc+'<br>💰 VGV %CBR: '+el.dataset.vgv+'<br>🏷 '+el.dataset.seg;t.style.display='block';t.style.left=(e.clientX+14)+'px';t.style.top=(e.clientY-10)+'px';}
 function hideTip(){document.getElementById('tooltip').style.display='none';}
 document.addEventListener('mousemove',function(e){var t=document.getElementById('tooltip');if(t.style.display==='block'){t.style.left=(e.clientX+14)+'px';t.style.top=(e.clientY-10)+'px';}});
-
 function renderTable(){
   var tbody=document.getElementById('tableBody');
   document.getElementById('tableCount').textContent=filteredData.length;
@@ -995,10 +1048,7 @@ function renderTable(){
 function onCellFocus(){_editingCell=true;pauseListener();}
 function onCellBlur(e,idx){_editingCell=false;if(!editMode||simMode)return;var td=e.target,field=td.dataset.field;if(!field)return;var numFields=['unidades','vgvNom','vgvNomCbr','vgvVpCbr','pctCbr'];var nv=numFields.indexOf(field)!==-1?(parseFloat(td.textContent.trim())||0):sanitizeRichText(td.innerHTML);var cur=appData[idx][field];if(String(cur!=null?cur:'')===String(nv))return;appData[idx][field]=nv;editedRows.add(idx);td.closest('tr').classList.add('row-edited');updateKPIs();persistMain();}
 function onSelChange(idx,field,val){pauseListener();activeData()[idx][field]=val;if(simMode)simEditedRows.add(idx);else{editedRows.add(idx);persistMain();}if(field==='status'||field==='segmento')applyFilters();}
-
-// ── VERSÕES: salvas como documentos individuais na subcoleção ──
 function snapshotNow(){return{data:JSON.parse(JSON.stringify(appData)),statusData:JSON.parse(JSON.stringify(statusData))};}
-
 function autoSaveVersion(label){
   var now=new Date();
   var snap=snapshotNow();
@@ -1009,7 +1059,6 @@ function autoSaveVersion(label){
   persistVersion(v).catch(function(e){console.error('Erro ao salvar versão:',e);});
   renderHistoryList();
 }
-
 function saveVersion(){
   var now=new Date();
   var mc=versions.filter(function(v){return!v.auto;}).length;
@@ -1025,7 +1074,6 @@ function saveVersion(){
   applyFilters();
   showToast('💾 '+label+' salva!');
 }
-
 function renderHistoryList(){
   var list=document.getElementById('historyList');
   if(!versions.length){list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-soft);font-size:.82rem">Nenhuma versão salva ainda.<br><br>Use <strong>💾 Salvar versão</strong> para criar um ponto de restauração.</div>';return;}
@@ -1040,7 +1088,6 @@ function renderHistoryList(){
   });
 }
 function toggleHistory(){var p=document.getElementById('historyPanel');p.classList.toggle('open');if(p.classList.contains('open')){loadVersions(renderHistoryList);}}
-
 function exportJSON(){var b=new Blob([JSON.stringify({exportDate:new Date().toISOString(),data:filteredData,statusData:statusData},null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='living_landbank_'+new Date().toISOString().slice(0,10)+'.json';a.click();}
 function exportCSV(){var cols=['nome','segmento','coordenacao','doninho','status','isCoringa','mix','reuniaoPassagem','meeting','lancamento','coringaMeeting','coringaLancamento','unidades','vgvNom','vgvNomCbr','vgvVpCbr','pctCbr','inicioObra'];var rows=activeData().map(function(r){return cols.map(function(c){return'"'+String(r[c]!=null?r[c]:'').replace(/"/g,'""')+'"';}).join(';');});var b=new Blob(['\uFEFF'+[cols.join(';')].concat(rows).join('\n')],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='living_landbank_'+(simMode?'SIMULACAO_':'')+new Date().toISOString().slice(0,10)+'.csv';a.click();showToast('📥 CSV exportado!',simMode);}
 function exportFullBackup(){var payload={exportDate:new Date().toISOString(),appData:appData,statusData:statusData,versions:versions};var b=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='living_landbank_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();showToast('📦 Backup completo exportado!');}
@@ -1072,15 +1119,6 @@ function handleImportFile(event){
   };
   reader.readAsText(file,'UTF-8');
 }
-
-(function init(){
-  loadFromFirebase(function(){
-    sortByMeeting(appData);
-    filteredData=appData.slice();
-    updateKPIs();renderTable();renderHistoryList();renderGantt();
-    startMainListener();startStatusListener();
-  });
-})();
 </script>
 </body>
 </html>
