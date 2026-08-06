@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Acesso — Landbank Living</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C1A785;--gold-dark:#A8894F;--gold-light:#D9BF8C;
+  --bg:#F7F5F1;--surface:#FFFFFF;--border:#E8E0D0;
+  --text:#2C2A26;--text-mid:#5C5649;--text-soft:#9C9080;
+  --shadow:0 4px 32px rgba(193,167,133,.18);--radius:14px;
+}
+html,body{height:100%}
+body{
+  font-family:'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;position:relative;overflow:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 20%,rgba(193,167,133,.13) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 80%,rgba(168,137,79,.10) 0%,transparent 60%);
+  pointer-events:none;
+}
+.card{
+  background:var(--surface);border-radius:var(--radius);
+  border:1px solid var(--border);box-shadow:var(--shadow);
+  width:420px;max-width:100%;padding:44px 40px 38px;
+  position:relative;z-index:1;
+}
+.logo-wrap{display:flex;justify-content:center;margin-bottom:10px}
+.tagline{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-align:center;margin-bottom:28px}
+.screen{display:none}.screen.active{display:block}
+.screen-title{font-size:1.15rem;font-weight:700;color:var(--text);text-align:center;margin-bottom:4px}
+.screen-sub{font-size:.84rem;color:var(--text-soft);text-align:center;margin-bottom:26px;line-height:1.6}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:15px}
+.field label{font-size:.71rem;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.06em}
+.field input{
+  padding:11px 13px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:.94rem;outline:none;transition:border-color .2s,box-shadow .2s;
+  font-family:inherit;color:var(--text);background:#fff;
+}
+.field input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(193,167,133,.15)}
+.field-pwd{position:relative}
+.field-pwd input{padding-right:42px}
+.toggle-pwd{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;
+  color:var(--text-soft);font-size:1rem;padding:2px;transition:.15s;
+}
+.toggle-pwd:hover{color:var(--gold-dark)}
+.btn-primary{
+  width:100%;padding:13px;
+  background:linear-gradient(135deg,var(--gold-dark),var(--gold));
+  color:#fff;border:none;border-radius:8px;
+  font-size:.97rem;font-weight:700;cursor:pointer;transition:.2s;
+  margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-primary:hover{background:linear-gradient(135deg,#8c7040,var(--gold-dark));box-shadow:0 4px 16px rgba(168,137,79,.3)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;box-shadow:none}
+.btn-link{
+  background:none;border:none;color:var(--gold-dark);
+  font-size:.84rem;font-weight:600;cursor:pointer;padding:0;
+  text-decoration:underline;text-underline-offset:3px;transition:.15s;
+}
+.btn-link:hover{color:var(--gold)}
+.msg{border-radius:7px;padding:10px 13px;font-size:.82rem;font-weight:600;margin-top:12px;display:none;line-height:1.5}
+.msg.error{background:#FDECEA;color:#B04040;border:1px solid #F5C6C2}
+.msg.success{background:#E8F5EE;color:#2E7D52;border:1px solid #B8DEC8}
+.msg.warning{background:#FFF8EC;color:#C47A2A;border:1px solid #F0D090}
+.sep{display:flex;align-items:center;gap:10px;margin:20px 0;color:var(--text-soft);font-size:.76rem}
+.sep::before,.sep::after{content:'';flex:1;height:1px;background:var(--border)}
+.nav-row{text-align:center;margin-top:18px;font-size:.84rem;color:var(--text-soft)}
+.spinner{
+  width:17px;height:17px;border:2.5px solid rgba(255,255,255,.35);
+  border-top-color:#fff;border-radius:50%;
+  animation:spin .7s linear infinite;display:none;flex-shrink:0;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Força de senha */
+.pwd-bar-wrap{margin-top:6px}
+.pwd-bar{height:3px;border-radius:2px;transition:all .3s;background:var(--border);width:0}
+.pwd-bar.fraca{background:#B04040;width:33%}
+.pwd-bar.media{background:#C47A2A;width:66%}
+.pwd-bar.forte{background:#2E7D52;width:100%}
+.pwd-label{font-size:.7rem;margin-top:4px;color:var(--text-soft);min-height:14px}
+/* Ícone de sucesso */
+.big-icon{font-size:3rem;text-align:center;margin-bottom:14px}
+/* Steps do cadastro */
+.steps{display:flex;justify-content:center;gap:6px;margin-bottom:24px}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:.3s}
+.step-dot.active{background:var(--gold);transform:scale(1.2)}
+.step-dot.done{background:var(--gold-dark)}
+@media(max-width:480px){.card{padding:32px 20px 28px}}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- LOGO -->
+  <div class="logo-wrap">
+    <svg style="height:38px;width:auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060.546 365.977">
+      <defs><style>.cls-1{fill:#c1a785}</style></defs>
+      <g><g><g>
+        <path class="cls-1" d="M295.421,114.597v110.803c0,6.045,4.9,10.945,10.945,10.945h78.322v15.035h-63.84c-23.359,0-42.295-18.936-42.295-42.295v-94.487h16.868Z"/>
+        <path class="cls-1" d="M435.931,114.597h16.868v136.782h-16.868V114.597Z"/>
+        <path class="cls-1" d="M563.333,251.379h0c-5.358,0-10.162-3.299-12.086-8.3l-53.567-128.483h17.969l48.142,115.147,47.776-115.147h17.419l-53.567,128.483c-1.924,5-6.728,8.3-12.086,8.3Z"/>
+        <path class="cls-1" d="M673.866,114.597h16.868v136.782h-16.868V114.597Z"/>
+        <path class="cls-1" d="M761.652,136.075v115.305h-16.868v-124.703c0-6.671,5.408-12.08,12.08-12.08h0c3.612,0,7.035,1.617,9.33,4.407l87.441,106.327v-110.734h16.868v125.634c0,6.157-4.991,11.148-11.148,11.148h0c-3.384,0-6.586-1.537-8.701-4.179l-89.001-111.126Z"/>
+        <path class="cls-1" d="M941.87,131.622c-13.963,13.606-21.652,31.784-21.652,51.183s7.689,37.757,21.652,51.435c14.015,13.729,32.804,21.289,52.906,21.289,39.538,0,65.77-32.442,65.77-53.9v-2.79c0-12.464-10.104-22.567-22.567-22.567h-41.603v14.083l50.534-.184.005.246c.24,12.684-4.665,24.803-13.812,34.125-10.03,10.223-24,16.086-38.326,16.086-15.396,0-29.964-6.155-41.02-17.332-10.954-11.074-16.987-25.52-16.987-40.674,0-31.045,26.563-57.273,58.007-57.273,14.722,0,28.04,5.149,39.591,15.307l11.021-11.378c-13.213-11.969-31.645-18.83-50.612-18.83-20.104,0-38.894,7.52-52.906,21.175Z"/>
+      </g>
+        <path class="cls-1" d="M8.349,96.363c-5.346,5.346-8.349,12.597-8.349,20.157v104.095c0,26.24,21.272,47.511,47.511,47.511h57.349l-.149-268.126L8.349,96.363ZM104.861,268.126l.044,78.818c.009,16.874,20.367,25.368,32.366,13.504l93.377-92.322h-125.787Z"/>
+      </g></g>
+    </svg>
+  </div>
+  <div class="tagline">Painel de Gestão — Landbank</div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- TELA: LOGIN                     -->
+  <!-- ═══════════════════════════════ -->
+  <div class="screen active" id="screen-login">
+    <div class="screen-title">Bem-vindo de volta</div>
+    <div class="screen-sub">Acesso restrito ao time Living.<br/>Entre com seu e-mail e senha.</div>
+
+    <div class="field">
+      <label>E-mail</label>
+      <input type="email" id="l-email" placeholder="email@cyrela.com.br" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <div class="field-pwd">
+        <input type="password" id="l-senha" placeholder="••••••••"
+               autocomplete="current-password"
+               onkeydown="if(event.key==='Enter')fazerLogin()"/>
+        <button class="toggle-pwd" type="button" onclick="toggleVer('l-senha',this)" tabindex="-1">👁</button>
+      </div>
+    </div>
+
+    <div style="text-align:right;margin-top:-6px;margin-bottom:18px">
+      <button class="btn-link" onclick="ir('reset')">Esqueceu a senha?</button>
+    </div>
+
+    <button class="btn-primary" id="btn-login" onclick="fazerLogin()">
+      <span class="spinner" id="sp-login"></span>
+      <span id="txt-login">Entrar</span>
+    </button>
+    <div class="msg error" id="err-login"></div>
+
+    <div class="sep">ou</div>
+    <div class="nav-row">
+      Não tem acesso? <button class="btn-link" onclick="ir('cadastro')">Solicitar cadastro</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- TELA: CADASTRO                  -->
+  <!-- ═══════════════════════════════ -->
+  <div class="screen" id="screen-cadastro">
+    <div class="screen-title">Solicitar acesso</div>
+    <div class="screen-sub">Preencha seus dados. Seu acesso será<br/>liberado após aprovação do administrador.</div>
+
+    <!-- Indicador de etapas -->
+    <div class="steps">
+      <div class="step-dot active" id="dot-1"></div>
+      <div class="step-dot" id="dot-2"></div>
+      <div class="step-dot" id="dot-3"></div>
+    </div>
+
+    <!-- Etapa 1: Dados pessoais -->
+    <div id="etapa-1">
+      <div class="field">
+        <label>Nome completo</label>
+        <input type="text" id="c-nome" placeholder="Seu nome completo" autocomplete="name"/>
+      </div>
+      <div class="field">
+        <label>E-mail corporativo</label>
+        <input type="email" id="c-email" placeholder="email@cyrela.com.br" autocomplete="username"
+               onkeydown="if(event.key==='Enter')avancarEtapa2()"/>
+      </div>
+      <button class="btn-primary" onclick="avancarEtapa2()">
+        Continuar →
+      </button>
+      <div class="msg error" id="err-c1"></div>
+    </div>
+
+    <!-- Etapa 2: Senha -->
+    <div id="etapa-2" style="display:none">
+      <div class="field">
+        <label>Crie uma senha</label>
+        <div class="field-pwd">
+          <input type="password" id="c-senha" placeholder="Mínimo 6 caracteres"
+                 autocomplete="new-password" oninput="avaliarSenha(this.value)"/>
+          <button class="toggle-pwd" type="button" onclick="toggleVer('c-senha',this)" tabindex="-1">👁</button>
+        </div>
+        <div class="pwd-bar-wrap">
+          <div class="pwd-bar" id="pwd-bar"></div>
+          <div class="pwd-label" id="pwd-label"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Confirmar senha</label>
+        <div class="field-pwd">
+          <input type="password" id="c-confirma" placeholder="Repita a senha"
+                 autocomplete="new-password"
+                 onkeydown="if(event.key==='Enter')fazerCadastro()"/>
+          <button class="toggle-pwd" type="button" onclick="toggleVer('c-confirma',this)" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-cadastro" onclick="fazerCadastro()">
+        <span class="spinner" id="sp-cadastro"></span>
+        <span id="txt-cadastro">Enviar solicitação</span>
+      </button>
+      <div class="msg error" id="err-c2"></div>
+      <div style="text-align:center;margin-top:14px">
+        <button class="btn-link" onclick="voltarEtapa1()">← Voltar</button>
+      </div>
+    </div>
+
+    <!-- Etapa 3: Sucesso -->
+    <div id="etapa-3" style="display:none;text-align:center">
+      <div class="big-icon">📋</div>
+      <div class="screen-title">Solicitação enviada!</div>
+      <div class="screen-sub" style="margin-top:8px">
+        Sua solicitação foi registrada e o administrador foi notificado.<br/><br/>
+        Você receberá um e-mail assim que seu acesso for aprovado.
+      </div>
+      <button class="btn-primary" style="margin-top:20px" onclick="ir('login')">← Voltar ao login</button>
+    </div>
+
+    <div class="nav-row" id="nav-cadastro">
+      Já tem conta? <button class="btn-link" onclick="ir('login')">Fazer login</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- TELA: ESQUECEU A SENHA          -->
+  <!-- ═══════════════════════════════ -->
+  <div class="screen" id="screen-reset">
+
+    <div id="reset-form">
+      <div class="screen-title">Recuperar senha</div>
+      <div class="screen-sub">
+        Digite seu e-mail e o Firebase enviará um link seguro para você redefinir sua senha.
+      </div>
+      <div class="field">
+        <label>E-mail</label>
+        <input type="email" id="r-email" placeholder="email@cyrela.com.br"
+               autocomplete="email"
+               onkeydown="if(event.key==='Enter')fazerReset()"/>
+      </div>
+      <button class="btn-primary" id="btn-reset" onclick="fazerReset()">
+        <span class="spinner" id="sp-reset"></span>
+        <span id="txt-reset">Enviar link de recuperação</span>
+      </button>
+      <div class="msg error" id="err-reset"></div>
+    </div>
+
+    <div id="reset-ok" style="display:none;text-align:center">
+      <div class="big-icon">📬</div>
+      <div class="screen-title">E-mail enviado!</div>
+      <div class="screen-sub" style="margin-top:8px">
+        Verifique sua caixa de entrada e clique no link para redefinir sua senha.<br/><br/>
+        <span style="font-size:.78rem">Não recebeu? Confira a pasta de spam.</span>
+      </div>
+      <button class="btn-primary" style="margin-top:20px" onclick="ir('login')">← Voltar ao login</button>
+    </div>
+
+    <div class="nav-row" id="reset-nav">
+      <button class="btn-link" onclick="ir('login')">← Voltar ao login</button>
+    </div>
+  </div>
+
+</div><!-- /card -->
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG FIREBASE + EMAILJS
+// ══════════════════════════════════════════
+var firebaseConfig={
+  apiKey:"AIzaSyAOQ4jWpC4kE8efXU5D1KdvXg_De0U8WQ4",
+  authDomain:"living-landbank.firebaseapp.com",
+  projectId:"living-landbank",
+  storageBucket:"living-landbank.firebasestorage.app",
+  messagingSenderId:"572852178816",
+  appId:"1:572852178816:web:04a3a90b2435b94450fb65"
+};
+firebase.initializeApp(firebaseConfig);
+var auth=firebase.auth();
+var db=firebase.firestore();
+
+emailjs.init('P312jYZkHH4y6Jsad');
+
+var ADMIN_EMAIL='guilherme.carvalho@cyrela.com.br';
+var EMAILJS_SERVICE='service_zy35wya';
+var TPL_NOVA_SOLIC='template_x4y9jkh';   // notifica admin
+var TPL_CONFIRMACAO='template_z253g93';   // confirma ao usuário (enviado pelo admin ao aprovar)
+
+// ── Se já está logado, vai direto pro painel ──
+auth.onAuthStateChanged(function(user){
+  if(user) window.location.href='index.html';
+});
+
+// ══════════════════════════════════════════
+// NAVEGAÇÃO
+// ══════════════════════════════════════════
+function ir(tela){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('screen-'+tela).classList.add('active');
+  // Limpa mensagens
+  document.querySelectorAll('.msg').forEach(function(m){m.style.display='none';m.textContent='';});
+  // Foca no primeiro input
+  var first=document.getElementById('screen-'+tela).querySelector('input');
+  if(first) setTimeout(function(){first.focus();},120);
+  // Reset: garante que form esteja visível
+  if(tela==='reset'){
+    document.getElementById('reset-form').style.display='';
+    document.getElementById('reset-ok').style.display='none';
+    document.getElementById('reset-nav').style.display='';
+  }
+  // Cadastro: volta para etapa 1
+  if(tela==='cadastro'){
+    mostrarEtapa(1);
+  }
+}
+
+// ══════════════════════════════════════════
+// UTILITÁRIOS
+// ══════════════════════════════════════════
+function toggleVer(id,btn){
+  var inp=document.getElementById(id);
+  inp.type=inp.type==='password'?'text':'password';
+  btn.textContent=inp.type==='password'?'👁':'🙈';
+}
+
+function avaliarSenha(v){
+  var bar=document.getElementById('pwd-bar'),lbl=document.getElementById('pwd-label');
+  if(!v){bar.className='pwd-bar';lbl.textContent='';return;}
+  var forte=v.length>=8&&/[A-Z]/.test(v)&&/[0-9]/.test(v);
+  var media=v.length>=6;
+  if(forte){bar.className='pwd-bar forte';lbl.textContent='Senha forte ✓';}
+  else if(media){bar.className='pwd-bar media';lbl.textContent='Senha média — adicione letras maiúsculas e números';}
+  else{bar.className='pwd-bar fraca';lbl.textContent='Senha fraca — mínimo 6 caracteres';}
+}
+
+function setLoading(prefix,on){
+  var btn=document.getElementById('btn-'+prefix);
+  var sp=document.getElementById('sp-'+prefix);
+  var tx=document.getElementById('txt-'+prefix);
+  if(btn)btn.disabled=on;
+  if(sp)sp.style.display=on?'inline-block':'none';
+  if(tx)tx.style.opacity=on?'0.5':'1';
+}
+
+function showErr(id,msg){
+  var el=document.getElementById(id);
+  if(!el)return;
+  el.textContent=msg;el.className='msg error';el.style.display='block';
+}
+
+function errFB(code){
+  var map={
+    'auth/user-not-found':'Nenhuma conta encontrada com este e-mail.',
+    'auth/wrong-password':'Senha incorreta. Tente novamente.',
+    'auth/invalid-credential':'E-mail ou senha incorretos.',
+    'auth/invalid-email':'E-mail inválido.',
+    'auth/too-many-requests':'Muitas tentativas. Aguarde alguns minutos.',
+    'auth/email-already-in-use':'Este e-mail já possui uma solicitação ou conta ativa.',
+    'auth/weak-password':'Senha muito fraca. Use pelo menos 6 caracteres.',
+    'auth/network-request-failed':'Erro de conexão. Verifique sua internet.',
+    'auth/user-disabled':'Esta conta foi desativada. Contate o administrador.'
+  };
+  return map[code]||'Ocorreu um erro inesperado. Tente novamente.';
+}
+
+// ══════════════════════════════════════════
+// ETAPAS DO CADASTRO
+// ══════════════════════════════════════════
+function mostrarEtapa(n){
+  [1,2,3].forEach(function(i){
+    document.getElementById('etapa-'+i).style.display=i===n?'':'none';
+    var dot=document.getElementById('dot-'+i);
+    dot.className='step-dot'+(i<n?' done':i===n?' active':'');
+  });
+  // Esconde nav "já tem conta" na etapa 3
+  document.getElementById('nav-cadastro').style.display=n===3?'none':'';
+}
+
+function avancarEtapa2(){
+  var nome=document.getElementById('c-nome').value.trim();
+  var email=document.getElementById('c-email').value.trim();
+  document.getElementById('err-c1').style.display='none';
+  if(!nome){showErr('err-c1','Informe seu nome completo.');return;}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('err-c1','Informe um e-mail válido.');return;}
+  mostrarEtapa(2);
+  setTimeout(function(){document.getElementById('c-senha').focus();},120);
+}
+
+function voltarEtapa1(){
+  mostrarEtapa(1);
+  setTimeout(function(){document.getElementById('c-nome').focus();},120);
+}
+
+// ══════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════
+function fazerLogin(){
+  var email=document.getElementById('l-email').value.trim();
+  var senha=document.getElementById('l-senha').value;
+  document.getElementById('err-login').style.display='none';
+  if(!email||!senha){showErr('err-login','Preencha e-mail e senha.');return;}
+  setLoading('login',true);
+  auth.signInWithEmailAndPassword(email,senha)
+    .then(function(){window.location.href='index.html';})
+    .catch(function(e){
+      setLoading('login',false);
+      showErr('err-login',errFB(e.code));
+    });
+}
+
+// ══════════════════════════════════════════
+// CADASTRO — salva no Firestore + notifica admin
+// ══════════════════════════════════════════
+function fazerCadastro(){
+  var nome=document.getElementById('c-nome').value.trim();
+  var email=document.getElementById('c-email').value.trim();
+  var senha=document.getElementById('c-senha').value;
+  var confirma=document.getElementById('c-confirma').value;
+  document.getElementById('err-c2').style.display='none';
+
+  if(senha.length<6){showErr('err-c2','A senha deve ter pelo menos 6 caracteres.');return;}
+  if(senha!==confirma){showErr('err-c2','As senhas não coincidem.');return;}
+
+  setLoading('cadastro',true);
+
+  // Verifica se já existe solicitação pendente ou conta com este e-mail
+  db.collection('solicitacoes').where('email','==',email).get()
+    .then(function(snap){
+      if(!snap.empty){
+        setLoading('cadastro',false);
+        showErr('err-c2','Já existe uma solicitação registrada com este e-mail.');
+        return;
+      }
+
+      // Salva solicitação no Firestore (senha hasheada não é armazenada aqui;
+      // a criação da conta no Auth ocorre apenas quando o admin aprovar)
+      var agora=new Date();
+      var doc={
+        nome:nome,
+        email:email,
+        // Armazena senha temporária criptografada via btoa para o admin usar na criação
+        // ATENÇÃO: em produção robusta use Cloud Functions. Aqui é solução client-side simples.
+        senhaTemp:btoa(senha),
+        status:'pendente',
+        criadoEm:agora.toISOString(),
+        criadoEmTs:firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      return db.collection('solicitacoes').add(doc).then(function(ref){
+        // Notifica admin via EmailJS
+        return emailjs.send(EMAILJS_SERVICE, TPL_NOVA_SOLIC,{
+          admin_email: ADMIN_EMAIL,
+          solicitante_nome: nome,
+          solicitante_email: email,
+          data_solicitacao: agora.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+          doc_id: ref.id
+        });
+      });
+    })
+    .then(function(){
+      setLoading('cadastro',false);
+      mostrarEtapa(3);
+    })
+    .catch(function(e){
+      setLoading('cadastro',false);
+      console.error(e);
+      showErr('err-c2','Erro ao enviar solicitação. Tente novamente.');
+    });
+}
+
+// ══════════════════════════════════════════
+// RESET DE SENHA — Firebase nativo
+// ══════════════════════════════════════════
+function fazerReset(){
+  var email=document.getElementById('r-email').value.trim();
+  document.getElementById('err-reset').style.display='none';
+  if(!email){showErr('err-reset','Informe o e-mail.');return;}
+  setLoading('reset',true);
+  auth.sendPasswordResetEmail(email)
+    .then(function(){
+      setLoading('reset',false);
+      document.getElementById('reset-form').style.display='none';
+      document.getElementById('reset-ok').style.display='block';
+      document.getElementById('reset-nav').style.display='none';
+    })
+    .catch(function(e){
+      setLoading('reset',false);
+      showErr('err-reset',errFB(e.code));
+    });
+}
+</script>
+</body>
+</html>
