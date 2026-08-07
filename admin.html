@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin — Landbank Living</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C1A785;--gold-dark:#A8894F;--gold-light:#D9BF8C;
+  --bg:#F7F5F1;--surface:#FFFFFF;--border:#E8E0D0;
+  --text:#2C2A26;--text-mid:#5C5649;--text-soft:#9C9080;
+  --shadow:0 2px 16px rgba(193,167,133,.13);--radius:12px;
+  --green:#2E7D52;--green-bg:#E8F5EE;--green-border:#B8DEC8;
+  --red:#B04040;--red-bg:#FDECEA;--red-border:#F5C6C2;
+  --yellow:#C47A2A;--yellow-bg:#FFF8EC;--yellow-border:#F0D090;
+}
+html,body{min-height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text)}
+
+#loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold-dark);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:.85rem;color:var(--text-soft)}
+
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(193,167,133,.08)}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-logo{height:28px;width:auto}
+.header-title{font-size:.92rem;font-weight:700;color:var(--text)}
+.header-badge{background:var(--yellow-bg);color:var(--yellow);font-size:.65rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:20px;border:1px solid var(--yellow-border)}
+.header-right{display:flex;align-items:center;gap:12px}
+.admin-email{font-size:.78rem;color:var(--text-soft)}
+.btn-logout{background:none;border:1.5px solid var(--border);border-radius:7px;padding:6px 14px;font-size:.8rem;font-weight:600;color:var(--text-mid);cursor:pointer;transition:.2s}
+.btn-logout:hover{border-color:var(--gold);color:var(--gold-dark)}
+.btn-painel{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:.8rem;font-weight:700;cursor:pointer;transition:.2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn-painel:hover{opacity:.88}
+
+main{max-width:960px;margin:0 auto;padding:32px 24px}
+.page-title{font-size:1.35rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.page-sub{font-size:.85rem;color:var(--text-soft);margin-bottom:28px}
+
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:28px}
+.tab{background:none;border:none;padding:10px 18px;font-size:.88rem;font-weight:600;color:var(--text-soft);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.2s;border-radius:6px 6px 0 0}
+.tab:hover{color:var(--text);background:rgba(193,167,133,.06)}
+.tab.active{color:var(--gold-dark);border-bottom-color:var(--gold-dark);background:rgba(193,167,133,.07)}
+.tab-count{display:inline-flex;align-items:center;justify-content:center;background:var(--red-bg);color:var(--red);font-size:.68rem;font-weight:800;min-width:18px;height:18px;border-radius:9px;padding:0 5px;margin-left:6px}
+.tab-count.zero{background:var(--border);color:var(--text-soft)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+.empty-state{text-align:center;padding:48px 20px;color:var(--text-soft);font-size:.88rem}
+.empty-state .icon{font-size:2rem;margin-bottom:10px}
+
+.cards-list{display:flex;flex-direction:column;gap:14px}
+.req-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);transition:.2s}
+.req-card:hover{box-shadow:0 4px 24px rgba(193,167,133,.18)}
+.req-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;color:#fff;flex-shrink:0}
+.req-info{flex:1;min-width:0}
+.req-name{font-weight:700;font-size:.97rem;color:var(--text);margin-bottom:2px}
+.req-email{font-size:.82rem;color:var(--text-soft)}
+.req-date{font-size:.74rem;color:var(--text-soft);margin-top:4px}
+.req-actions{display:flex;gap:8px;flex-shrink:0}
+.btn-aprovar{background:linear-gradient(135deg,#2E7D52,#3a9966);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:.82rem;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap}
+.btn-aprovar:hover{box-shadow:0 3px 12px rgba(46,125,82,.3);transform:translateY(-1px)}
+.btn-aprovar:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-rejeitar{background:none;color:var(--red);border:1.5px solid var(--red-border);border-radius:7px;padding:8px 14px;font-size:.82rem;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap}
+.btn-rejeitar:hover{background:var(--red-bg)}
+.btn-rejeitar:disabled{opacity:.5;cursor:not-allowed}
+
+.user-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow)}
+.user-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;color:#fff;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-weight:700;font-size:.93rem;color:var(--text)}
+.user-email{font-size:.8rem;color:var(--text-soft)}
+.user-since{font-size:.72rem;color:var(--text-soft);margin-top:3px}
+.role-badge{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:20px;flex-shrink:0}
+.role-badge.admin{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-border)}
+.role-badge.user{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.btn-revogar{background:none;color:var(--red);border:1.5px solid var(--red-border);border-radius:7px;padding:6px 12px;font-size:.78rem;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap;flex-shrink:0}
+.btn-revogar:hover{background:var(--red-bg)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(44,42,38,.55);display:none;align-items:center;justify-content:center;z-index:9998;padding:20px}
+.modal-overlay.active{display:flex}
+.modal-box{background:var(--surface);border-radius:var(--radius);padding:32px 28px;max-width:400px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.18);text-align:center}
+.modal-icon{font-size:2.4rem;margin-bottom:14px}
+.modal-title{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:8px}
+.modal-msg{font-size:.86rem;color:var(--text-mid);line-height:1.6;margin-bottom:24px}
+.modal-actions{display:flex;gap:10px;justify-content:center}
+.btn-modal-cancel{background:none;border:1.5px solid var(--border);border-radius:7px;padding:9px 20px;font-size:.86rem;font-weight:600;color:var(--text-mid);cursor:pointer;transition:.2s}
+.btn-modal-cancel:hover{border-color:var(--gold)}
+.btn-modal-confirm{background:var(--red);color:#fff;border:none;border-radius:7px;padding:9px 20px;font-size:.86rem;font-weight:700;cursor:pointer;transition:.2s}
+.btn-modal-confirm.green{background:var(--green)}
+
+#toast{position:fixed;bottom:28px;right:28px;padding:12px 20px;border-radius:9px;font-size:.85rem;font-weight:700;z-index:9999;opacity:0;transform:translateY(12px);transition:all .3s;pointer-events:none;max-width:320px;line-height:1.5}
+#toast.show{opacity:1;transform:translateY(0)}
+#toast.success{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+#toast.error{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+#toast.info{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-border)}
+
+@media(max-width:600px){
+  header{padding:0 16px}
+  main{padding:20px 14px}
+  .req-card,.user-card{flex-wrap:wrap}
+  .req-actions{width:100%;justify-content:flex-end}
+  .admin-email{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div class="loading-text">Verificando acesso…</div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-icon" id="modal-icon">✅</div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-msg" id="modal-msg"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-modal-confirm" id="modal-confirm-btn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<header>
+  <div class="header-left">
+    <svg class="header-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060.546 365.977">
+      <defs><style>.cls-1{fill:#c1a785}</style></defs>
+      <g><g><g>
+        <path class="cls-1" d="M295.421,114.597v110.803c0,6.045,4.9,10.945,10.945,10.945h78.322v15.035h-63.84c-23.359,0-42.295-18.936-42.295-42.295v-94.487h16.868Z"/>
+        <path class="cls-1" d="M435.931,114.597h16.868v136.782h-16.868V114.597Z"/>
+        <path class="cls-1" d="M563.333,251.379h0c-5.358,0-10.162-3.299-12.086-8.3l-53.567-128.483h17.969l48.142,115.147,47.776-115.147h17.419l-53.567,128.483c-1.924,5-6.728,8.3-12.086,8.3Z"/>
+        <path class="cls-1" d="M673.866,114.597h16.868v136.782h-16.868V114.597Z"/>
+        <path class="cls-1" d="M761.652,136.075v115.305h-16.868v-124.703c0-6.671,5.408-12.08,12.08-12.08h0c3.612,0,7.035,1.617,9.33,4.407l87.441,106.327v-110.734h16.868v125.634c0,6.157-4.991,11.148-11.148,11.148h0c-3.384,0-6.586-1.537-8.701-4.179l-89.001-111.126Z"/>
+        <path class="cls-1" d="M941.87,131.622c-13.963,13.606-21.652,31.784-21.652,51.183s7.689,37.757,21.652,51.435c14.015,13.729,32.804,21.289,52.906,21.289,39.538,0,65.77-32.442,65.77-53.9v-2.79c0-12.464-10.104-22.567-22.567-22.567h-41.603v14.083l50.534-.184.005.246c.24,12.684-4.665,24.803-13.812,34.125-10.03,10.223-24,16.086-38.326,16.086-15.396,0-29.964-6.155-41.02-17.332-10.954-11.074-16.987-25.52-16.987-40.674,0-31.045,26.563-57.273,58.007-57.273,14.722,0,28.04,5.149,39.591,15.307l11.021-11.378c-13.213-11.969-31.645-18.83-50.612-18.83-20.104,0-38.894,7.52-52.906,21.175Z"/>
+      </g>
+        <path class="cls-1" d="M8.349,96.363c-5.346,5.346-8.349,12.597-8.349,20.157v104.095c0,26.24,21.272,47.511,47.511,47.511h57.349l-.149-268.126L8.349,96.363ZM104.861,268.126l.044,78.818c.009,16.874,20.367,25.368,32.366,13.504l93.377-92.322h-125.787Z"/>
+      </g></g>
+    </svg>
+    <div class="header-title">Painel Administrativo</div>
+    <span class="header-badge">Admin</span>
+  </div>
+  <div class="header-right">
+    <span class="admin-email" id="admin-email-display"></span>
+    <a href="index.html" class="btn-painel">← Painel</a>
+    <button class="btn-logout" onclick="logout()">Sair</button>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">Gestão de Acessos</div>
+  <div class="page-sub">Gerencie solicitações pendentes e usuários ativos do Landbank Living.</div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="mudarTab('pendentes',this)">
+      Solicitações pendentes
+      <span class="tab-count zero" id="count-pendentes">0</span>
+    </button>
+    <button class="tab" onclick="mudarTab('usuarios',this)">
+      Usuários ativos
+      <span class="tab-count zero" id="count-usuarios">0</span>
+    </button>
+  </div>
+
+  <div class="tab-panel active" id="panel-pendentes">
+    <div class="cards-list" id="list-pendentes">
+      <div class="empty-state"><div class="icon">🕐</div>Carregando solicitações…</div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="panel-usuarios">
+    <div class="cards-list" id="list-usuarios">
+      <div class="empty-state"><div class="icon">🕐</div>Carregando usuários…</div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ── CONFIG FIREBASE ────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyAOQ4jWpC4kE8efXU5D1KdvXg_De0U8WQ4",
+  authDomain: "living-landbank.firebaseapp.com",
+  projectId: "living-landbank",
+  storageBucket: "living-landbank.firebasestorage.app",
+  messagingSenderId: "572852178816",
+  appId: "1:572852178816:web:04a3a90b2435b94450fb65"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ── EMAILJS ────────────────────────────────────────────────────────────────
+emailjs.init('P312jYZkHH4y6Jsad');
+const EJ_SVC     = 'service_zy35wya';
+const EJ_TPL_APR = 'template_z253g93';
+
+// ── AUTH GUARD ─────────────────────────────────────────────────────────────
+auth.onAuthStateChanged(async user => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  const snap = await db.collection('usuarios').doc(user.uid).get();
+  if (!snap.exists || snap.data().role !== 'admin') {
+    await auth.signOut();
+    window.location.href = 'login.html';
+    return;
+  }
+  document.getElementById('admin-email-display').textContent = user.email;
+  document.getElementById('loading-screen').style.display = 'none';
+  carregarSolicitacoes();
+  carregarUsuarios();
+});
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+function iniciais(nome) {
+  if (!nome) return '?';
+  const p = nome.trim().split(' ');
+  return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase();
+}
+
+function formatarData(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('pt-BR') + ' às ' +
+    d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+}
+
+let _toastTimer = null;
+function toast(msg, tipo) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = tipo + ' show';
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 4500);
+}
+
+let _modalCb = null;
+function abrirModal(icone, titulo, msg, cor, cb) {
+  document.getElementById('modal-icon').textContent = icone;
+  document.getElementById('modal-title').textContent = titulo;
+  document.getElementById('modal-msg').textContent = msg;
+  const btn = document.getElementById('modal-confirm-btn');
+  btn.className = 'btn-modal-confirm' + (cor === 'green' ? ' green' : '');
+  btn.onclick = () => { fecharModal(); cb(); };
+  document.getElementById('modal').classList.add('active');
+}
+function fecharModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+function atualizarContador(listId, countId) {
+  const qtd = document.querySelectorAll('#' + listId + ' .req-card, #' + listId + ' .user-card').length;
+  const el = document.getElementById(countId);
+  el.textContent = qtd;
+  el.className = 'tab-count' + (qtd === 0 ? ' zero' : '');
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function mudarTab(nome, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + nome).classList.add('active');
+}
+
+// ── SOLICITAÇÕES ───────────────────────────────────────────────────────────
+function carregarSolicitacoes() {
+  db.collection('solicitacoes')
+    .where('status', '==', 'pendente')
+    .orderBy('criadoEmTs', 'asc')
+    .onSnapshot(snap => {
+      const list = document.getElementById('list-pendentes');
+      if (snap.empty) {
+        list.innerHTML = '<div class="empty-state"><div class="icon">✅</div>Nenhuma solicitação pendente.</div>';
+        document.getElementById('count-pendentes').textContent = '0';
+        document.getElementById('count-pendentes').className = 'tab-count zero';
+        return;
+      }
+      list.innerHTML = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        const card = document.createElement('div');
+        card.className = 'req-card';
+        card.id = 'req-' + doc.id;
+        card.innerHTML = `
+          <div class="req-avatar">${iniciais(d.nome)}</div>
+          <div class="req-info">
+            <div class="req-name">${d.nome || 'Sem nome'}</div>
+            <div class="req-email">${d.email || ''}</div>
+            <div class="req-date">Solicitado em ${formatarData(d.criadoEm)}</div>
+          </div>
+          <div class="req-actions">
+            <button class="btn-aprovar" id="btn-apr-${doc.id}"
+              onclick="confirmarAprovar('${doc.id}','${(d.nome||'').replace(/'/g,"\\'")}','${d.email||''}','${d.senhaTemp||''}')">
+              ✓ Aprovar
+            </button>
+            <button class="btn-rejeitar" id="btn-rej-${doc.id}"
+              onclick="confirmarRejeitar('${doc.id}','${(d.nome||'').replace(/'/g,"\\'")}')">
+              Rejeitar
+            </button>
+          </div>`;
+        list.appendChild(card);
+      });
+      const el = document.getElementById('count-pendentes');
+      el.textContent = snap.size;
+      el.className = 'tab-count' + (snap.size === 0 ? ' zero' : '');
+    }, err => {
+      console.error(err);
+      document.getElementById('list-pendentes').innerHTML =
+        '<div class="empty-state"><div class="icon">⚠️</div>Erro ao carregar solicitações.</div>';
+    });
+}
+
+// ── USUÁRIOS ATIVOS ────────────────────────────────────────────────────────
+function carregarUsuarios() {
+  db.collection('usuarios')
+    .where('status', '==', 'aprovado')
+    .onSnapshot(snap => {
+      const list = document.getElementById('list-usuarios');
+      if (snap.empty) {
+        list.innerHTML = '<div class="empty-state"><div class="icon">👥</div>Nenhum usuário ativo.</div>';
+        document.getElementById('count-usuarios').textContent = '0';
+        document.getElementById('count-usuarios').className = 'tab-count zero';
+        return;
+      }
+      list.innerHTML = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        const isAdmin = d.role === 'admin';
+        const card = document.createElement('div');
+        card.className = 'user-card';
+        card.id = 'usr-' + doc.id;
+        card.innerHTML = `
+          <div class="user-avatar">${iniciais(d.nome)}</div>
+          <div class="user-info">
+            <div class="user-name">${d.nome || 'Sem nome'}</div>
+            <div class="user-email">${d.email || ''}</div>
+            <div class="user-since">Desde ${formatarData(d.criadoEm || null)}</div>
+          </div>
+          <span class="role-badge ${isAdmin ? 'admin' : 'user'}">${isAdmin ? 'Admin' : 'Usuário'}</span>
+          ${!isAdmin ? `<button class="btn-revogar"
+            onclick="confirmarRevogar('${doc.id}','${(d.nome||'').replace(/'/g,"\\'")}')">
+            Revogar</button>` : ''}`;
+        list.appendChild(card);
+      });
+      const el = document.getElementById('count-usuarios');
+      el.textContent = snap.size;
+      el.className = 'tab-count zero';
+    }, err => {
+      console.error(err);
+      document.getElementById('list-usuarios').innerHTML =
+        '<div class="empty-state"><div class="icon">⚠️</div>Erro ao carregar usuários.</div>';
+    });
+}
+
+// ── APROVAR ────────────────────────────────────────────────────────────────
+function confirmarAprovar(id, nome, email, senhaTemp) {
+  abrirModal('✅', 'Aprovar acesso?',
+    nome + ' (' + email + ') será notificado por e-mail e poderá acessar o painel.',
+    'green', () => aprovar(id, nome, email, senhaTemp));
+}
+
+async function aprovar(id, nome, email, senhaTemp) {
+  const btnApr = document.getElementById('btn-apr-' + id);
+  const btnRej = document.getElementById('btn-rej-' + id);
+  if (btnApr) { btnApr.disabled = true; btnApr.textContent = 'Aprovando…'; }
+  if (btnRej) btnRej.disabled = true;
+
+  try {
+    const senha = senhaTemp ? atob(senhaTemp) : '';
+
+    // Atualiza doc em usuarios (criado no cadastro com o UID do Auth)
+    await db.collection('usuarios').doc(id).set({
+      nome, email,
+      role: 'user',
+      status: 'aprovado',
+      aprovadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    // Atualiza solicitação
+    await db.collection('solicitacoes').doc(id).update({
+      status: 'aprovado',
+      aprovadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Envia e-mail ao usuário
+    await emailjs.send(EJ_SVC, EJ_TPL_APR, {
+      to_name: nome,
+      to_email: email,
+      senha_temp: senha,
+      login_url: 'https://negociosliving.github.io/living-landbank/login.html'
+    });
+
+    toast('✅ Acesso aprovado! ' + nome + ' foi notificado por e-mail.', 'success');
+  } catch (err) {
+    console.error(err);
+    toast('Erro ao aprovar: ' + err.message, 'error');
+    if (btnApr) { btnApr.disabled = false; btnApr.textContent = '✓ Aprovar'; }
+    if (btnRej) btnRej.disabled = false;
+  }
+}
+
+// ── REJEITAR ───────────────────────────────────────────────────────────────
+function confirmarRejeitar(id, nome) {
+  abrirModal('🗑️', 'Rejeitar solicitação?',
+    'A solicitação de ' + nome + ' será removida silenciosamente.',
+    '', () => rejeitar(id));
+}
+
+async function rejeitar(id) {
+  try {
+    await db.collection('solicitacoes').doc(id).update({ status: 'rejeitado' });
+    toast('Solicitação rejeitada.', 'info');
+  } catch (err) {
+    toast('Erro ao rejeitar: ' + err.message, 'error');
+  }
+}
+
+// ── REVOGAR ────────────────────────────────────────────────────────────────
+function confirmarRevogar(id, nome) {
+  abrirModal('⛔', 'Revogar acesso?',
+    nome + ' perderá o acesso imediatamente.',
+    '', () => revogar(id, nome));
+}
+
+async function revogar(id, nome) {
+  try {
+    await db.collection('usuarios').doc(id).update({ status: 'revogado', role: 'revogado' });
+    toast('Acesso de ' + nome + ' revogado.', 'success');
+  } catch (err) {
+    toast('Erro ao revogar: ' + err.message, 'error');
+  }
+}
+
+// ── LOGOUT ─────────────────────────────────────────────────────────────────
+function logout() {
+  auth.signOut().then(() => { window.location.href = 'login.html'; });
+}
+</script>
+</body>
+</html>
