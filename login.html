@@ -21,22 +21,17 @@
 }
 html,body{min-height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text)}
 body{display:flex;align-items:center;justify-content:center;padding:32px 16px}
-
 .card{background:var(--surface);border-radius:var(--radius);box-shadow:0 4px 32px rgba(193,167,133,.18);width:100%;max-width:400px;overflow:hidden}
 .card-body{padding:40px 36px 36px}
-
 .logo-wrap{text-align:center;margin-bottom:28px}
 .logo-wrap svg{height:36px;width:auto}
 .logo-sub{font-size:.7rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-top:8px}
-
 .steps{display:flex;justify-content:center;gap:6px;margin-bottom:28px}
 .step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:.3s}
 .step-dot.active{background:var(--gold);transform:scale(1.25)}
 .step-dot.done{background:var(--gold-light)}
-
 .form-title{font-size:1.15rem;font-weight:700;text-align:center;color:var(--text);margin-bottom:6px}
 .form-sub{font-size:.82rem;color:var(--text-soft);text-align:center;line-height:1.6;margin-bottom:26px}
-
 .field{margin-bottom:18px}
 .field label{display:block;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-mid);margin-bottom:6px}
 .input-wrap{position:relative}
@@ -49,10 +44,8 @@ body{display:flex;align-items:center;justify-content:center;padding:32px 16px}
 .field-hint.err{color:var(--red)}
 .field-hint.ok{color:var(--green)}
 .field-hint.soft{color:var(--text-soft)}
-
 .pw-bar{height:3px;border-radius:2px;margin-top:6px;background:var(--border);overflow:hidden}
 .pw-bar-fill{height:100%;border-radius:2px;transition:width .3s,background .3s;width:0}
-
 .btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#fff;border:none;border-radius:9px;font-size:.95rem;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
 .btn-primary:hover{opacity:.88;transform:translateY(-1px)}
 .btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none}
@@ -60,23 +53,18 @@ body{display:flex;align-items:center;justify-content:center;padding:32px 16px}
 .btn-secondary:hover{border-color:var(--gold);color:var(--gold-dark)}
 .btn-spinner{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
-
 .link-back{display:block;text-align:center;margin-top:20px;font-size:.82rem;color:var(--gold-dark);text-decoration:none;font-weight:600}
 .link-back:hover{text-decoration:underline}
-
 .alert{border-radius:8px;padding:12px 14px;font-size:.83rem;line-height:1.6;margin-bottom:18px;display:none}
 .alert.show{display:block}
 .alert.error{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
 .alert.success{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
 .alert.info{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-border)}
-
 .tela{display:none}.tela.active{display:block}
-
 .success-wrap{text-align:center;padding:12px 0 8px}
 .success-icon{font-size:3rem;margin-bottom:16px}
 .success-title{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px}
 .success-msg{font-size:.85rem;color:var(--text-soft);line-height:1.7}
-
 .divider{display:flex;align-items:center;gap:10px;margin:20px 0;color:var(--text-soft);font-size:.78rem}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
 </style>
@@ -84,7 +72,6 @@ body{display:flex;align-items:center;justify-content:center;padding:32px 16px}
 <body>
 <div class="card">
   <div class="card-body">
-
     <div class="logo-wrap">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060.546 365.977">
         <defs><style>.cls-1{fill:#c1a785}</style></defs>
@@ -189,7 +176,7 @@ body{display:flex;align-items:center;justify-content:center;padding:32px 16px}
         <span class="btn-spinner" id="sp-enviar"></span>
         <span id="txt-enviar">Enviar solicitação</span>
       </button>
-      <a class="link-back" href="#" onclick="irPara('tela-senha');return false;">← Voltar</a>
+      <a class="link-back" href="#" onclick="irPara('tela-solicitar');return false;">← Voltar</a>
     </div>
 
     <!-- TELA 4: SUCESSO -->
@@ -222,10 +209,8 @@ body{display:flex;align-items:center;justify-content:center;padding:32px 16px}
       </button>
       <a class="link-back" href="#" onclick="irPara('tela-login');return false;">← Voltar</a>
     </div>
-
   </div>
 </div>
-
 <script>
 var firebaseConfig={
   apiKey:"AIzaSyAOQ4jWpC4kE8efXU5D1KdvXg_De0U8WQ4",
@@ -239,15 +224,14 @@ firebase.initializeApp(firebaseConfig);
 var auth=firebase.auth();
 var db=firebase.firestore();
 emailjs.init('P312jYZkHH4y6Jsad');
-
 var EMAILJS_SERVICE='service_zy35wya';
 var TPL_ADMIN='template_x4y9jkh';
 
-// Se já está logado e tem doc, vai direto pro painel
+// Se já está logado e aprovado, vai direto pro painel
 auth.onAuthStateChanged(function(user){
   if(user){
     db.collection('usuarios').doc(user.uid).get().then(function(doc){
-      if(doc.exists) window.location.href='index.html';
+      if(doc.exists && doc.data().status==='aprovado') window.location.href='index.html';
     });
   }
 });
@@ -259,75 +243,26 @@ function irPara(id){
   limparAlertas();
 }
 
-// ── LOGIN ──
+// ── LOGIN (simples — Auth cuida de tudo) ──
 function fazerLogin(){
   var email=v('login-email').trim();
   var senha=v('login-senha');
   if(!email||!senha){showAlert('alert-login','Preencha e-mail e senha.','error');return;}
   setBtnLoad('btn-login','sp-login','txt-login',true,'Entrando…');
-
-  // Verifica se existe solicitação APROVADA para este e-mail
-  db.collection('solicitacoes')
-    .where('email','==',email)
-    .where('status','==','aprovado')
-    .limit(1).get()
-    .then(function(snap){
-      if(!snap.empty){
-        // Solicitação aprovada: cria a conta no Auth agora
-        var sol=snap.docs[0];
-        var dados=sol.data();
-        var senhaGuardada='';
-        try{senhaGuardada=atob(dados.senhaTemp);}catch(e){}
-
-        if(senha!==senhaGuardada){
-          setBtnLoad('btn-login','sp-login','txt-login',false,'Entrar');
-          showAlert('alert-login','Senha incorreta.','error');
-          return;
-        }
-
-        auth.createUserWithEmailAndPassword(email,senha)
-          .then(function(cred){
-            return db.collection('usuarios').doc(cred.user.uid).set({
-              nome:dados.nome,
-              email:email,
-              role:'user',
-              criadoEm:new Date().toISOString(),
-              criadoEmTs:firebase.firestore.FieldValue.serverTimestamp()
-            }).then(function(){
-              return sol.ref.update({status:'concluido'});
-            }).then(function(){
-              window.location.href='index.html';
-            });
-          })
-          .catch(function(e){
-            if(e.code==='auth/email-already-in-use'){
-              // Conta já existe, faz login normal
-              loginNormal(email,senha);
-            } else {
-              setBtnLoad('btn-login','sp-login','txt-login',false,'Entrar');
-              showAlert('alert-login',traduzirErro(e),'error');
-            }
-          });
-      } else {
-        // Sem solicitação aprovada: login normal
-        loginNormal(email,senha);
-      }
-    })
-    .catch(function(){
-      // Erro na consulta: tenta login normal mesmo assim
-      loginNormal(email,senha);
-    });
-}
-
-function loginNormal(email,senha){
   auth.signInWithEmailAndPassword(email,senha)
     .then(function(cred){
       return db.collection('usuarios').doc(cred.user.uid).get()
         .then(function(doc){
-          if(!doc.exists){
+          if(!doc.exists || doc.data().status==='pendente'){
             return auth.signOut().then(function(){
               setBtnLoad('btn-login','sp-login','txt-login',false,'Entrar');
               showAlert('alert-login','Sua solicitação ainda está em análise. Aguarde a aprovação.','info');
+            });
+          }
+          if(doc.data().status==='revogado'){
+            return auth.signOut().then(function(){
+              setBtnLoad('btn-login','sp-login','txt-login',false,'Entrar');
+              showAlert('alert-login','Seu acesso foi revogado. Entre em contato com o administrador.','error');
             });
           }
           window.location.href='index.html';
@@ -341,7 +276,6 @@ function loginNormal(email,senha){
 
 // ── SOLICITAR — PASSO 1 ──
 var _nome='',_email='';
-
 function validarNome(){
   var val=v('sol-nome').trim();
   var h=document.getElementById('hint-nome');
@@ -352,7 +286,6 @@ function validarNome(){
     h.textContent='';h.className='field-hint soft';inp.className=val?'ok':'';
   }
 }
-
 function validarEmailSol(){
   var val=v('sol-email').trim();
   var h=document.getElementById('hint-email-sol');
@@ -364,7 +297,6 @@ function validarEmailSol(){
     h.textContent='';h.className='field-hint';inp.className=val&&ok?'ok':'';
   }
 }
-
 function proximoPasso(){
   var nome=v('sol-nome').trim();
   var email=v('sol-email').trim();
@@ -375,15 +307,14 @@ function proximoPasso(){
     showAlert('alert-sol','Digite um e-mail válido.','error');return;
   }
   setBtnLoad('btn-proximo','sp-proximo','txt-proximo',true,'Verificando…');
-
+  // Verifica se já existe solicitação ou conta para este e-mail
   db.collection('solicitacoes').where('email','==',email).limit(1).get()
     .then(function(snap){
       setBtnLoad('btn-proximo','sp-proximo','txt-proximo',false,'Próximo →');
       if(!snap.empty){
         var st=snap.docs[0].data().status;
-        if(st==='pendente') {showAlert('alert-sol','Já existe uma solicitação pendente para este e-mail.','info');return;}
-        if(st==='aprovado')  {showAlert('alert-sol','Este e-mail já foi aprovado. Faça login.','info');return;}
-        if(st==='concluido') {showAlert('alert-sol','Este e-mail já possui acesso. Faça login.','info');return;}
+        if(st==='pendente'){showAlert('alert-sol','Já existe uma solicitação pendente para este e-mail.','info');return;}
+        if(st==='aprovado'||st==='concluido'){showAlert('alert-sol','Este e-mail já possui acesso. Faça login.','info');return;}
       }
       _nome=nome;_email=email;
       irPara('tela-senha');
@@ -415,7 +346,6 @@ function avaliarSenha(){
   inp.className=pw?(score>=3?'ok':'error'):'';
   validarConfirm();
 }
-
 function validarConfirm(){
   var pw=v('sol-senha'),pw2=v('sol-senha2');
   var h=document.getElementById('hint-pw2');
@@ -425,6 +355,7 @@ function validarConfirm(){
   else{h.textContent='Senhas não coincidem.';h.className='field-hint err';inp.className='error';}
 }
 
+// ── ENVIAR SOLICITAÇÃO (cria conta Auth + docs Firestore) ──
 function enviarSolicitacao(){
   var senha=v('sol-senha'),senha2=v('sol-senha2');
   if(senha.length<6){showAlert('alert-pw','A senha precisa ter pelo menos 6 caracteres.','error');return;}
@@ -432,31 +363,59 @@ function enviarSolicitacao(){
   if(!_nome||!_email){irPara('tela-solicitar');return;}
   setBtnLoad('btn-enviar','sp-enviar','txt-enviar',true,'Enviando…');
 
-  db.collection('solicitacoes').add({
-    nome:_nome,
-    email:_email,
-    senhaTemp:btoa(senha),
-    status:'pendente',
-    criadoEm:new Date().toISOString(),
-    criadoEmTs:firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function(){
-    return emailjs.send(EMAILJS_SERVICE,TPL_ADMIN,{
-      usuario_nome:_nome,
-      usuario_email:_email,
-      link_admin:'https://negociosliving.github.io/living-landbank/admin.html'
-    });
-  }).then(function(){
-    setBtnLoad('btn-enviar','sp-enviar','txt-enviar',false,'Enviar solicitação');
-    irPara('tela-sucesso');
-  }).catch(function(e){
-    setBtnLoad('btn-enviar','sp-enviar','txt-enviar',false,'Enviar solicitação');
-    // Se o erro for do EmailJS (tem .status), a solicitação já foi salva no Firestore
-    if(typeof e.status!=='undefined'){
+  // 1. Cria conta no Firebase Auth
+  auth.createUserWithEmailAndPassword(_email, senha)
+    .then(function(cred){
+      var uid = cred.user.uid;
+      var agora = new Date().toISOString();
+      var ts = firebase.firestore.FieldValue.serverTimestamp();
+
+      // 2. Cria doc em usuarios/{uid} com status pendente
+      var promUsuario = db.collection('usuarios').doc(uid).set({
+        nome: _nome,
+        email: _email,
+        role: 'user',
+        status: 'pendente',
+        criadoEm: agora,
+        criadoEmTs: ts
+      });
+
+      // 3. Cria doc em solicitacoes/{uid} com o MESMO uid
+      var promSolicitacao = db.collection('solicitacoes').doc(uid).set({
+        nome: _nome,
+        email: _email,
+        status: 'pendente',
+        criadoEm: agora,
+        criadoEmTs: ts
+      });
+
+      return Promise.all([promUsuario, promSolicitacao]).then(function(){
+        // 4. Desloga imediatamente (não pode entrar antes da aprovação)
+        return auth.signOut();
+      }).then(function(){
+        // 5. Envia e-mail ao admin
+        return emailjs.send(EMAILJS_SERVICE, TPL_ADMIN, {
+          usuario_nome: _nome,
+          usuario_email: _email,
+          link_admin: 'https://negociosliving.github.io/living-landbank/admin.html'
+        });
+      });
+    })
+    .then(function(){
+      setBtnLoad('btn-enviar','sp-enviar','txt-enviar',false,'Enviar solicitação');
       irPara('tela-sucesso');
-    } else {
-      showAlert('alert-pw','Erro: '+traduzirErroFS(e),'error');
-    }
-  });
+    })
+    .catch(function(e){
+      setBtnLoad('btn-enviar','sp-enviar','txt-enviar',false,'Enviar solicitação');
+      // EmailJS falhou mas conta foi criada — mostra sucesso mesmo assim
+      if(typeof e.status!=='undefined'){
+        irPara('tela-sucesso');
+      } else if(e.code==='auth/email-already-in-use'){
+        showAlert('alert-pw','Este e-mail já possui uma solicitação. Faça login ou aguarde a aprovação.','info');
+      } else {
+        showAlert('alert-pw','Erro: '+traduzirErroFS(e),'error');
+      }
+    });
 }
 
 // ── RESET ──
@@ -476,13 +435,11 @@ function enviarReset(){
 
 // ── HELPERS ──
 function v(id){return document.getElementById(id).value;}
-
 function togglePw(id,btn){
   var inp=document.getElementById(id);
   inp.type=inp.type==='password'?'text':'password';
   btn.textContent=inp.type==='password'?'👁':'🙈';
 }
-
 function setBtnLoad(btnId,spId,txtId,on,label){
   var btn=document.getElementById(btnId);
   var sp=document.getElementById(spId);
@@ -491,7 +448,6 @@ function setBtnLoad(btnId,spId,txtId,on,label){
   if(sp)sp.style.display=on?'inline-block':'none';
   if(txt)txt.textContent=on?label:(txtId==='txt-login'?'Entrar':txtId==='txt-proximo'?'Próximo →':txtId==='txt-enviar'?'Enviar solicitação':'Enviar link');
 }
-
 function showAlert(id,msg,tipo){
   var el=document.getElementById(id);
   el.textContent=msg;el.className='alert '+tipo+' show';
@@ -499,7 +455,6 @@ function showAlert(id,msg,tipo){
 function limparAlertas(){
   document.querySelectorAll('.alert').forEach(function(a){a.className='alert';a.textContent='';});
 }
-
 function traduzirErro(e){
   var map={
     'auth/user-not-found':'E-mail não encontrado.',
@@ -513,7 +468,6 @@ function traduzirErro(e){
   };
   return map[e.code]||('Erro: '+e.message);
 }
-
 function traduzirErroFS(e){
   if(e.code==='permission-denied')return'Permissão negada. Verifique as regras do Firestore.';
   if(e.code==='unavailable')return'Serviço indisponível. Tente novamente.';
