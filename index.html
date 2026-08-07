@@ -632,27 +632,35 @@ var _painelInicializado=false;
 auth.onAuthStateChanged(function(user){
   var gate=document.getElementById('authGate');
   if(!user){
-    // Não logado → redireciona para login
     window.location.href='login.html';
     return;
   }
-  // Logado → esconde o gate e mostra o painel
-  gate.style.display='none';
-
-  // Preenche o chip do usuário no header
-  var email=user.email||'';
-  var inicial=email.charAt(0).toUpperCase();
-  document.getElementById('userAvatar').textContent=inicial;
-  document.getElementById('userEmail').textContent=email;
-  document.getElementById('userChip').style.display='flex';
-  document.getElementById('btnLogout').style.display='inline-flex';
-  db.collection('usuarios').doc(user.uid).get().then(function(snap){if(snap.exists&&snap.data().role==='admin'){document.getElementById('btnAdmin').style.display='inline-flex';}});
-
-  // Inicializa o painel apenas uma vez
-  if(!_painelInicializado){
-    _painelInicializado=true;
-    initPainel();
-  }
+  // Verifica status no Firestore antes de liberar o painel
+  db.collection('usuarios').doc(user.uid).get().then(function(snap){
+    if(!snap.exists || snap.data().status !== 'aprovado'){
+      auth.signOut().then(function(){
+        window.location.href='login.html';
+      });
+      return;
+    }
+    // Aprovado — libera o painel
+    gate.style.display='none';
+    var email=user.email||'';
+    var inicial=email.charAt(0).toUpperCase();
+    document.getElementById('userAvatar').textContent=inicial;
+    document.getElementById('userEmail').textContent=email;
+    document.getElementById('userChip').style.display='flex';
+    document.getElementById('btnLogout').style.display='inline-flex';
+    if(snap.data().role==='admin'){
+      document.getElementById('btnAdmin').style.display='inline-flex';
+    }
+    if(!_painelInicializado){
+      _painelInicializado=true;
+      initPainel();
+    }
+  }).catch(function(){
+    window.location.href='login.html';
+  });
 });
 
 function fazerLogout(){
@@ -1126,4 +1134,3 @@ function handleImportFile(event){
 </script>
 </body>
 </html>
-retry deploy - github actions recovered
