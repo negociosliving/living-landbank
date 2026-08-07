@@ -57,6 +57,8 @@ body.sim-active{background:#F5F5F5}
   font-size:.76rem;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;
 }
 .btn-logout:hover{border-color:#B04040;color:#B04040;background:#FDECEA}
+.btn-admin{background:linear-gradient(135deg,#C47A2A,#E0983A);color:#fff;border:none;padding:5px 13px;border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer;transition:.2s;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:5px;}
+.btn-admin:hover{opacity:.85}
 
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(44,42,38,.72);z-index:9999;align-items:center;justify-content:center}
 .modal-overlay.active{display:flex}
@@ -511,6 +513,7 @@ tbody td[contenteditable="true"]:focus{background:#FFF8EC;border-bottom-color:va
   <div class="user-chip-avatar" id="userAvatar">?</div>
   <span class="user-chip-email" id="userEmail"></span>
 </div>
+<a href="admin.html" class="btn-admin" id="btnAdmin" style="display:none">⚙️ Admin</a>
 <button class="btn-logout" id="btnLogout" style="display:none" onclick="fazerLogout()">Sair</button>
 
 <button class="btn btn-outline" id="versionsBtn" style="display:none" onclick="toggleHistory()">📋 Versões</button>
@@ -643,6 +646,7 @@ auth.onAuthStateChanged(function(user){
   document.getElementById('userEmail').textContent=email;
   document.getElementById('userChip').style.display='flex';
   document.getElementById('btnLogout').style.display='inline-flex';
+  db.collection('usuarios').doc(user.uid).get().then(function(snap){if(snap.exists&&snap.data().role==='admin'){document.getElementById('btnAdmin').style.display='inline-flex';}});
 
   // Inicializa o painel apenas uma vez
   if(!_painelInicializado){
